@@ -7,7 +7,7 @@
 // ==========================================================================
 const SUPABASE_URL = 'https://zvstqnosywejhizvejju.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2c3Rxbm9zeXdlamhpenZlamp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNjYwNzIsImV4cCI6MjA5ODg0MjA3Mn0.79nkM4ORcSF5qT4CV3ztLvunCgBAVYOOlD5UGP8NnBY';
-let supabase;
+var supabase;
 try {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } catch (err) {
@@ -15,13 +15,7 @@ try {
     console.error('Supabase init error:', err);
 }
 
-// ==========================================================================
-// 1. ESTRUCTURA DE BASE DE DATOS
-// ==========================================================================
-
 const DB = {
-
-
     usuarios: [],
     clientes: [],
     mascotas: [],
