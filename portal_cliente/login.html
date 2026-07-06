@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+<script>
+window.onerror = function(msg, url, line, col, error) {
+    alert("💥 ERROR JS: " + msg + "\nLinea: " + line);
+    return false;
+};
+window.onunhandledrejection = function(event) {
+    alert("💥 PROMESA FALLIDA: " + (event.reason ? event.reason.message || event.reason : "Error desconocido"));
+};
+</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Cliente - MaskoVet</title>
