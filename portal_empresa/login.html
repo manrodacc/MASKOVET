@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Empresa - MaskoVet</title>
+    <link rel="stylesheet" href="../core/css/variables.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0F172A, #1E293B);
+            padding: 24px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: #FFFFFF;
+            padding: 40px 36px;
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1E5EFF, #4F46E5, #1E5EFF);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0%,100% { background-position: -200% 0; } 50% { background-position: 200% 0; } }
+        .logo-section { text-align: center; margin-bottom: 28px; }
+        .logo-icon { font-size: 3.5rem; display: block; margin-bottom: 8px; }
+        .logo-title { font-size: 1.8rem; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
+        .logo-title span { background: linear-gradient(135deg, #1E5EFF, #4F46E5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo-subtitle { color: #6B7280; font-size: 0.9rem; margin-top: 4px; }
+        .logo-badge { display: inline-block; background: #1E5EFF; color: #FFFFFF; font-size: 0.7rem; font-weight: 700; padding: 4px 14px; border-radius: 9999px; text-transform: uppercase; margin-top: 6px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.85rem; color: #6B7280; margin-bottom: 4px; }
+        .form-group label .required { color: #EF4444; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper input { width: 100%; padding: 12px 16px; padding-right: 44px; border: 1px solid #E2E8F0; border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; background: #F8FAFC; color: #111827; transition: all 0.2s; }
+        .input-wrapper input:focus { outline: none; border-color: #1E5EFF; background: #FFFFFF; box-shadow: 0 0 0 4px rgba(30, 94, 255, 0.1); }
+        .input-wrapper .toggle-password { position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #64748B; padding: 4px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 24px; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; font-family: 'Inter', sans-serif; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: linear-gradient(135deg, #1E5EFF, #4F46E5); color: #FFFFFF; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30, 94, 255, 0.3); }
+        .btn-secondary { background: #F8FAFC; color: #111827; border: 1px solid #E2E8F0; }
+        .btn-secondary:hover { background: #FFFFFF; border-color: #9CA3AF; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+        .btn .spinner { display: none; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #FFFFFF; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .btn.loading .spinner { display: inline-block; }
+        .btn.loading .btn-text { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .divider { display: flex; align-items: center; gap: 16px; margin: 20px 0; color: #64748B; font-size: 0.8rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #E2E8F0; }
+        .security-badge { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 16px; font-size: 0.75rem; color: #94A3B8; }
+        .toast-container { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: 100%; }
+        .toast { background: #FFFFFF; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; opacity: 0; transform: translateX(50px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 4px solid #1E5EFF; }
+        .toast.success { border-left-color: #10B981; }
+        .toast.error { border-left-color: #EF4444; }
+        .toast-icon { font-size: 1.5rem; line-height: 1; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.9rem; color: #111827; }
+        .toast-message { font-size: 0.85rem; color: #6B7280; margin-top: 2px; }
+        .toast-close { background: none; border: none; color: #64748B; cursor: pointer; font-size: 1.2rem; padding: 0 4px; }
+        .toast-close:hover { color: #111827; }
+        .input-error { font-size: 0.8rem; color: #EF4444; margin-top: 4px; display: none; }
+        .input-error.visible { display: block; }
+        .email-info {
+            text-align: center;
+            padding: 10px;
+            background: #EBF1FF;
+            border-radius: 12px;
+            color: #1E5EFF;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+        .email-info span { font-size: 0.8rem; color: #64748B; font-weight: 400; }
+        @media (max-width: 480px) { .login-container { padding: 28px 20px; border-radius: 18px; } }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="logo-section">
+        <span class="logo-icon">🐾</span>
+        <h1 class="logo-title"><span>MaskoVet</span></h1>
+        <p class="logo-subtitle">Panel Administrativo</p>
+        <span class="logo-badge">🔒 Acceso Restringido</span>
+    </div>
+
+    <div class="form-box">
+        <div class="email-info">
+            📧 admin@maskovet.com
+            <br><span>Correo fijo del administrador</span>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+            <div class="form-group">
+                <label for="loginPassword">Contraseña <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" autocomplete="current-password" required minlength="6">
+                    <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">👁️</button>
+                </div>
+                <div class="input-error" id="loginPasswordError">La contraseña debe tener al menos 6 caracteres</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="loginBtn">
+                <span class="btn-text">🚀 Ingresar al Panel</span>
+                <span class="spinner"></span>
+            </button>
+        </form>
+
+        <div class="divider">o</div>
+        <button class="btn btn-secondary" onclick="window.location.href='../index.html'">🏠 Volver al Inicio</button>
+        <div class="security-badge"><span>🔐</span> Conexión segura · Acceso solo para personal autorizado</div>
+    </div>
+</div>
+
+<script src="../core/js/utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../core/js/db.js"></script>
+
+<script>
+// ==========================================================================
+// 1. MOSTRAR/OCULTAR CONTRASEÑA
+// ==========================================================================
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.textContent = input.type === 'password' ? '👁️' : '🙈';
+}
+
+// ==========================================================================
+// 2. HANDLE LOGIN - COMPARACIÓN DIRECTA SIN ENCRIPTACIÓN
+// ==========================================================================
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const password = document.getElementById('loginPassword').value.trim();
+    
+    if (!password) {
+        showToast('Ingresa tu contraseña', 'error');
+        return;
+    }
+    if (password.length < 6) {
+        showToast('La contraseña debe tener al menos 6 caracteres', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('loginBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    
+    // ============================================================
+    // BUSCAR ADMIN - COMPARACIÓN DIRECTA (SIN ENCRIPTACIÓN)
+    // ============================================================
+    
+    console.log('🔍 Buscando admin...');
+    
+    // Buscar el usuario admin en DB
+    const usuario = DB.usuarios.find(u => u.correo === 'admin@maskovet.com');
+    
+    console.log('👤 Usuario encontrado:', usuario);
+    
+    if (!usuario) {
+        showToast('Error: Admin no encontrado en la base de datos', 'error');
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        return;
+    }
+    
+    // ============================================================
+    // COMPARAR CONTRASEÑA - INTENTAR DE 3 FORMAS
+    // ============================================================
+    
+    // Forma 1: Texto plano directo
+    const directMatch = password === 'Miperrito2026';
+    
+    // Forma 2: Comparar con la contraseña guardada (encriptada o no)
+    const storedMatch = usuario.password === password;
+    
+    // Forma 3: Encriptar la ingresada y comparar
+    const encrypted = encryptPassword(password);
+    const encryptedMatch = usuario.password === encrypted;
+    
+    console.log('🔑 Comparaciones:');
+    console.log('   Directa (Miperrito2026):', directMatch);
+    console.log('   Contra guardada:', storedMatch);
+    console.log('   Contra encriptada:', encryptedMatch);
+    console.log('   Password guardada:', usuario.password);
+    console.log('   Password encriptada:', encrypted);
+    
+    // Si cualquiera de las 3 formas funciona, login exitoso
+    const passwordCorrect = directMatch || storedMatch || encryptedMatch;
+    
+    if (!passwordCorrect) {
+        showToast('Contraseña incorrecta', 'error');
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        return;
+    }
+    
+    // ============================================================
+    // LOGIN EXITOSO
+    // ============================================================
+    
+    console.log('✅ Login exitoso!');
+    
+    // Guardar sesión
+    const session = {
+        isLoggedIn: true,
+        usuarioId: usuario.id,
+        usuario: {
+            id: usuario.id,
+            nombres: usuario.nombres || 'Administrador',
+            apellidos: usuario.apellidos || '',
+            correo: usuario.correo,
+            rol: usuario.rol
+        },
+        fechaInicio: getCurrentDateTime(),
+        fechaExpiracion: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString()
+    };
+    
+    saveToStorage('maskovet_admin_session', session);
+    
+    showToast(`¡Bienvenido ${usuario.nombres}! 🐾`, 'success');
+    
+    setTimeout(() => {
+        window.location.href = 'dashboard.html';
+    }, 500);
+}
+
+// ==========================================================================
+// 3. SISTEMA DE TOAST
+// ==========================================================================
+function showToast(message, type = "info") {
+    const container = document.querySelector('.toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${type === 'success' ? '✅' : '❌'}</span>
+        <div class="toast-content">
+            <div class="toast-title">${type === 'success' ? 'Éxito' : 'Error'}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+// ==========================================================================
+// 4. VERIFICAR Y CREAR ADMIN SI NO EXISTE
+// ==========================================================================
+document.addEventListener('DOMContentLoaded', async function() {
+    await initDB();
+    // Verificar sesión
+    const session = getFromStorage('maskovet_admin_session');
+    if (session && session.isLoggedIn) {
+        const expiracion = new Date(session.fechaExpiracion);
+        if (expiracion > new Date()) {
+            window.location.href = 'dashboard.html';
+            return;
+        }
+    }
+    
+    // Verificar si existe admin
+    const admin = DB.usuarios.find(u => u.correo === 'admin@maskovet.com');
+    
+    if (!admin) {
+        console.log('🔧 Admin no encontrado. Creando...');
+        
+        DB.usuarios.push({
+            id: generateId('USR'),
+            nombres: 'Admin',
+            apellidos: 'MaskoVet',
+            correo: 'admin@maskovet.com',
+            password: 'Miperrito2026', // ¡TEXTO PLANO!
+            telefono: '929514843',
+            rol: 'empresa',
+            estado: 'Activo',
+            fechaCreacion: getCurrentDateTime(),
+            fechaActualizacion: getCurrentDateTime()
+        });
+        
+        saveDB();
+        console.log('✅ Admin creado con contraseña: Miperrito2026');
+    } else {
+        console.log('✅ Admin existe:', admin.correo);
+        console.log('🔑 Contraseña guardada:', admin.password);
+    }
+});
+
+console.log('✅ Login Empresa cargado');
+</script>
+</body>
+</html>

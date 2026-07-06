@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaskoVet Enterprise - Dashboard Administrador</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../core/css/variables.css">
+    <link rel="stylesheet" href="css/empresa-styles.css">
+    <style>
+        .admin-section { display: none; animation: fadeIn 0.3s ease; }
+        .admin-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); display:none; justify-content:center; align-items:center; z-index:9999; }
+        .custom-modal-overlay.active { display:flex; }
+        .custom-modal-content { background:#FFFFFF; border-radius:24px; padding:32px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(15,23,42,0.16); border:1px solid #E2E8F0; animation:modalSlideIn 0.3s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes modalSlideIn { from { opacity:0; transform:scale(0.95) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .form-admin-input { width:100%; padding:10px 14px; border:1px solid #E2E8F0; border-radius:10px; font:inherit; background:#FFFFFF; transition:all 0.2s ease; color:#111827; }
+        .form-admin-input:focus { outline:none; border-color:#1E5EFF; box-shadow:0 0 0 4px rgba(30,94,255,0.1); }
+        .btn-action { border:none; cursor:pointer; padding:10px 20px; border-radius:12px; font-weight:600; font-size:0.9rem; color:white; background:linear-gradient(135deg,#1E5EFF,#4F46E5); transition:all 0.2s ease; }
+        .btn-action:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(30,94,255,0.3); }
+        .btn-action.danger { background:linear-gradient(135deg,#EF4444,#DC2626); }
+        .btn-action.success { background:linear-gradient(135deg,#10B981,#059669); }
+        .btn-action.warning { background:linear-gradient(135deg,#F59E0B,#D97706); color:#111827; }
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 12px; border-radius:9999px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; }
+        .status-pendiente { background:#FEF3C7; color:#92400E; }
+        .status-aprobado { background:#DCFCE7; color:#166534; }
+        .status-cancelado { background:#FEE2E2; color:#991B1B; }
+        .status-en-progreso { background:#DBEAFE; color:#1D4ED8; }
+        .toast-container { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: 100%; }
+        .toast { background: #FFFFFF; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; opacity: 0; transform: translateX(50px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-left: 4px solid #1E5EFF; }
+        .toast.success { border-left-color: #10B981; }
+        .toast.error { border-left-color: #EF4444; }
+        .toast.warning { border-left-color: #F59E0B; }
+        .toast.info { border-left-color: #1E5EFF; }
+        .toast-icon { font-size: 1.5rem; line-height: 1; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.9rem; color: #111827; }
+        .toast-message { font-size: 0.85rem; color: #6B7280; margin-top: 2px; }
+        .toast-close { background: none; border: none; color: #64748B; cursor: pointer; font-size: 1.2rem; padding: 0 4px; }
+        .toast-close:hover { color: #111827; }
+        .modal-close { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #64748B; transition: color 0.2s ease; padding: 4px 8px; }
+        .modal-close:hover { color: #111827; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+        .modal-actions .btn { flex: 1; min-width: 100px; }
+        .required { color: #EF4444; }
+    </style>
+</head>
+<body>
+
+<button class="hamburger-admin" onclick="toggleSidebarAdmin()">☰</button>
+
+<div class="admin-layout">
+    <div class="sidebar-admin-cell" id="sidebarAdmin">
+        <div class="admin-brand" onclick="cambiarSeccion('dashboard')">
+            <span class="admin-brand-icon">🐾</span>
+            <span class="admin-brand-text">MaskoVet</span>
+        </div>
+        <ul class="admin-menu">
+            <li class="active" data-section="dashboard"><a href="#" onclick="cambiarSeccion('dashboard')"><span class="menu-icon">📊</span><span class="menu-label">Dashboard</span></a></li>
+            <li data-section="clientes"><a href="#" onclick="cambiarSeccion('clientes')"><span class="menu-icon">👥</span><span class="menu-label">Clientes</span><span class="menu-badge" id="menuClientesBadge">0</span></a></li>
+            <li data-section="mascotas"><a href="#" onclick="cambiarSeccion('mascotas')"><span class="menu-icon">🐾</span><span class="menu-label">Mascotas</span><span class="menu-badge" id="menuMascotasBadge">0</span></a></li>
+            <li data-section="citas"><a href="#" onclick="cambiarSeccion('citas')"><span class="menu-icon">📅</span><span class="menu-label">Citas</span><span class="menu-badge danger" id="menuCitasBadge">0</span></a></li>
+            <li data-section="clinica"><a href="#" onclick="cambiarSeccion('clinica')"><span class="menu-icon">🏥</span><span class="menu-label">Clínica</span></a></li>
+            <li data-section="servicios"><a href="#" onclick="cambiarSeccion('servicios')"><span class="menu-icon">🩺</span><span class="menu-label">Servicios</span></a></li>
+            <li data-section="productos"><a href="#" onclick="cambiarSeccion('productos')"><span class="menu-icon">🛍️</span><span class="menu-label">Productos</span><span class="menu-badge warning" id="menuProductosBadge">0</span></a></li>
+            <li data-section="pagos"><a href="#" onclick="cambiarSeccion('pagos')"><span class="menu-icon">💰</span><span class="menu-label">Pagos</span><span class="menu-badge danger" id="menuPagosBadge">0</span></a></li>
+            <li data-section="ventas"><a href="#" onclick="cambiarSeccion('ventas')"><span class="menu-icon">📈</span><span class="menu-label">Ventas</span></a></li>
+            <li data-section="personal"><a href="#" onclick="cambiarSeccion('personal')"><span class="menu-icon">👩‍⚕️</span><span class="menu-label">Personal</span></a></li>
+            <li data-section="reportes"><a href="#" onclick="cambiarSeccion('reportes')"><span class="menu-icon">📋</span><span class="menu-label">Reportes</span></a></li>
+            <li data-section="config"><a href="#" onclick="cambiarSeccion('config')"><span class="menu-icon">⚙️</span><span class="menu-label">Configuración</span></a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <div><div class="user-name" id="adminName">Administrador</div><div class="user-role" id="adminRole">Admin</div></div>
+            </div>
+            <button class="btn btn-danger btn-full" onclick="EmpresaApp.logout()" style="margin-top:12px;">🚪 Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <main class="content-admin-cell">
+        <header class="topbar-admin">
+            <div class="topbar-left">
+                <span class="eyebrow" id="seccionTitulo">Dashboard</span>
+                <h2 id="seccionSubtitulo">Panel de Control</h2>
+            </div>
+            <div class="topbar-actions">
+                <input type="text" class="search-pill" id="searchGlobal" placeholder="🔎 Buscar en el panel..." oninput="EmpresaApp.buscarGlobal(this.value)">
+                <span class="date-display" id="fechaActual"></span>
+                <button class="btn btn-icon btn-outline" onclick="EmpresaApp.recargarDatos()" title="Recargar">🔄</button>
+            </div>
+        </header>
+
+        <section id="section-dashboard" class="admin-section active">
+            <div class="kpi-container">
+                <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-title">Clientes</div><div class="kpi-value" id="kpi-clientes">0</div><span class="kpi-change positive">+0 este mes</span></div>
+                <div class="kpi-card"><div class="kpi-icon">🐾</div><div class="kpi-title">Mascotas</div><div class="kpi-value" id="kpi-mascotas">0</div><span class="kpi-change positive">+0 registradas</span></div>
+                <div class="kpi-card"><div class="kpi-icon">📅</div><div class="kpi-title">Citas</div><div class="kpi-value" id="kpi-citas">0</div><span class="kpi-change neutral" id="kpi-citas-hoy">Hoy: 0</span></div>
+                <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-title">Ingresos</div><div class="kpi-value" id="kpi-ventas">S/ 0.00</div><span class="kpi-change positive" id="kpi-ventas-mes">Este mes</span></div>
+            </div>
+            <div class="kpi-container">
+                <div class="kpi-card"><div class="kpi-icon">⏳</div><div class="kpi-title">Pendientes</div><div class="kpi-value" id="kpi-citas-pendientes">0</div><span class="kpi-change negative">Requieren atención</span></div>
+                <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-title">Completadas</div><div class="kpi-value" id="kpi-completadas">0</div><span class="kpi-change positive">Finalizadas</span></div>
+                <div class="kpi-card"><div class="kpi-icon">👩‍⚕️</div><div class="kpi-title">Veterinarios</div><div class="kpi-value" id="kpi-veterinarios">0</div><span class="kpi-change neutral">En plantilla</span></div>
+                <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-title">Stock Bajo</div><div class="kpi-value" id="kpi-stock-bajo">0</div><span class="kpi-change negative">Revisar inventario</span></div>
+            </div>
+            <div class="admin-table-box"><div class="table-header"><h3>📋 Últimas Actividades</h3></div><div id="ultimasActividades"><p style="color:#64748b;">Cargando actividades...</p></div></div>
+        </section>
+
+        <section id="section-clientes" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>👥 Clientes Registrados</h3><div class="table-actions"><button class="btn btn-primary btn-sm" onclick="EmpresaApp.abrirModal('modal-cliente')">+ Nuevo Cliente</button></div></div>
+                <div class="report-filters">
+                    <div class="form-admin-group"><label>Buscar</label><input type="text" id="buscarCliente" class="form-admin-input" placeholder="Nombre o correo..." oninput="EmpresaApp.aplicarFiltro('clientes','termino',this.value)"></div>
+                    <div class="form-admin-group"><label>Estado</label><select id="filtroClienteEstado" class="form-admin-input" onchange="EmpresaApp.aplicarFiltro('clientes','estado',this.value)"><option value="Todos">Todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></div>
+                    <div class="form-admin-group" style="justify-content:flex-end;"><button class="btn btn-outline btn-sm" onclick="EmpresaApp.limpiarFiltros('clientes')">Limpiar</button></div>
+                </div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Mascotas</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="table-clientes-body"></tbody></table></div>
+                <div id="pagination-clientes" class="pagination"></div>
+            </div>
+        </section>
+
+        <section id="section-mascotas" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>🐾 Mascotas Registradas</h3><div class="table-actions"><div class="form-admin-group"><input type="text" id="buscarMascota" class="form-admin-input" placeholder="Buscar mascota..." oninput="EmpresaApp.renderizarMascotas()" style="min-width:200px;"></div></div></div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>ID</th><th>Propietario</th><th>Nombre</th><th>Especie</th><th>Raza</th><th>Sexo</th><th>Edad</th><th>Peso</th><th>Acciones</th></tr></thead><tbody id="table-mascotas-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-citas" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>📅 Citas Programadas</h3></div>
+                <div class="report-filters">
+                    <div class="form-admin-group"><label>Buscar</label><input type="text" id="buscarCita" class="form-admin-input" placeholder="Servicio o ID..." oninput="EmpresaApp.renderizarCitas()"></div>
+                    <div class="form-admin-group"><label>Estado</label><select id="filtroCitaEstado" class="form-admin-input" onchange="EmpresaApp.renderizarCitas()"><option value="Todos">Todos</option><option value="Pendiente">Pendiente</option><option value="Confirmada">Confirmada</option><option value="En proceso">En proceso</option><option value="Completada">Completada</option><option value="Cancelada">Cancelada</option></select></div>
+                </div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>ID</th><th>Cliente</th><th>Mascota</th><th>Veterinario</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Pago</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="table-citas-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-clinica" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>🏥 Gestión Clínica</h3></div>
+                <div class="admin-form-grid" style="margin-bottom:16px;">
+                    <div class="form-admin-group"><label>Mascota</label><select id="clinicaMascota" class="form-admin-input"></select></div>
+                    <div class="form-admin-group"><label>Veterinario</label><select id="clinicaVeterinario" class="form-admin-input"></select></div>
+                    <div class="form-admin-group"><label>Fecha</label><input id="clinicaFecha" class="form-admin-input" type="date"></div>
+                    <div class="form-admin-group"><label>Diagnóstico</label><input id="clinicaDiagnostico" class="form-admin-input" type="text" placeholder="Diagnóstico principal"></div>
+                    <div class="form-admin-group"><label>Tratamiento</label><input id="clinicaTratamiento" class="form-admin-input" type="text" placeholder="Tratamiento indicado"></div>
+                    <div class="form-admin-group"><label>Vacuna</label><input id="clinicaVacuna" class="form-admin-input" type="text" placeholder="Vacuna aplicada"></div>
+                    <div class="form-admin-group full"><label>Observaciones</label><input id="clinicaObservaciones" class="form-admin-input" type="text" placeholder="Notas clínicas"></div>
+                    <div class="form-admin-group full"><button class="btn btn-primary" onclick="EmpresaApp.guardarRegistroClinico()">💾 Guardar Registro Clínico</button></div>
+                </div>
+                <div style="margin-top:16px;"><div class="form-admin-group" style="max-width:300px;"><label>Buscar en historial</label><input type="text" id="buscarClinica" class="form-admin-input" placeholder="Diagnóstico o tratamiento..." oninput="EmpresaApp.renderizarClinica()"></div></div>
+                <div class="table-wrapper" style="margin-top:12px;"><table class="excel-table"><thead><tr><th>Fecha</th><th>Cliente</th><th>Mascota</th><th>Veterinario</th><th>Diagnóstico</th><th>Tratamiento</th><th>Vacuna</th><th>Estado</th></tr></thead><tbody id="table-clinica-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-servicios" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>🩺 Catálogo de Servicios</h3><div class="table-actions"><button class="btn btn-primary btn-sm" onclick="EmpresaApp.abrirModal('modal-servicio')">+ Nuevo Servicio</button></div></div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Duración</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="table-servicios-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-productos" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>🛍️ Control de Inventario</h3><div class="table-actions"><button class="btn btn-primary btn-sm" onclick="EmpresaApp.abrirModal('modal-producto')">+ Nuevo Producto</button></div></div>
+                <div class="form-admin-group" style="max-width:300px;margin-bottom:12px;"><label>Buscar producto</label><input type="text" id="buscarProducto" class="form-admin-input" placeholder="Nombre o categoría..." oninput="EmpresaApp.renderizarProductos()"></div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>ID</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Stock Mínimo</th><th>Alerta</th><th>Acciones</th></tr></thead><tbody id="table-productos-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-pagos" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>💰 Validación de Pagos</h3></div>
+                <div class="report-filters">
+                    <div class="form-admin-group"><label>Buscar</label><input type="text" id="buscarPago" class="form-admin-input" placeholder="ID o cliente..." oninput="EmpresaApp.renderizarPagos()"></div>
+                    <div class="form-admin-group"><label>Estado</label><select id="filtroPagoEstado" class="form-admin-input" onchange="EmpresaApp.renderizarPagos()"><option value="Todos">Todos</option><option value="Pendiente">Pendiente</option><option value="Aprobado">Aprobado</option><option value="Rechazado">Rechazado</option></select></div>
+                </div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>ID</th><th>Cliente</th><th>Venta</th><th>Monto</th><th>Método</th><th>Comprobante</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="table-pagos-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-ventas" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>📈 Historial de Ventas</h3></div>
+                <div class="form-admin-group" style="max-width:300px;margin-bottom:12px;"><label>Buscar venta</label><input type="text" id="buscarVenta" class="form-admin-input" placeholder="ID o cliente..." oninput="EmpresaApp.renderizarVentasHistorial()"></div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>ID</th><th>Cliente</th><th>Método</th><th>Total</th><th>Fecha</th><th>Estado</th></tr></thead><tbody id="table-ventas-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-personal" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>👩‍⚕️ Personal Operativo</h3><div class="table-actions"><button class="btn btn-primary btn-sm" onclick="EmpresaApp.crearVeterinario()">+ Veterinario</button><button class="btn btn-secondary btn-sm" onclick="EmpresaApp.crearRecepcionista()">+ Recepcionista</button><button class="btn btn-outline btn-sm" onclick="EmpresaApp.crearTecnico()">+ Técnico</button></div></div>
+                <div class="table-wrapper"><table class="excel-table"><thead><tr><th>Tipo</th><th>Nombre</th><th>Especialidad</th><th>Contacto</th><th>Acciones</th></tr></thead><tbody id="table-personal-body"></tbody></table></div>
+            </div>
+        </section>
+
+        <section id="section-reportes" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>📋 Reportes Empresariales</h3><div class="table-actions"><button class="btn btn-success btn-sm" onclick="EmpresaApp.exportarReporte('excel')">📥 Excel</button><button class="btn btn-warning btn-sm" onclick="EmpresaApp.exportarReporte('pdf')">📄 PDF</button><button class="btn btn-secondary btn-sm" onclick="EmpresaApp.exportarReporte('xml')">🧾 XML</button><button class="btn btn-outline btn-sm" onclick="EmpresaApp.exportarReporte('json')">📋 JSON</button></div></div>
+                <div class="report-filters">
+                    <div class="form-admin-group"><label>Tipo de Reporte</label><select id="reporteTipo" class="form-admin-input" onchange="EmpresaApp.generarVistaReporte()"><option value="clientes">📊 Clientes</option><option value="mascotas">🐾 Mascotas</option><option value="citas">📅 Citas</option><option value="productos">🛍️ Productos</option><option value="servicios">🩺 Servicios</option><option value="ventas">💰 Ventas</option><option value="pagos">💳 Pagos</option><option value="inventario">📦 Inventario</option><option value="clinica">📋 Clínica</option></select></div>
+                    <div class="form-admin-group" style="justify-content:flex-end;"><button class="btn btn-primary" onclick="EmpresaApp.generarVistaReporte()">👁️ Vista Previa</button></div>
+                </div>
+                <div id="reportPreview" style="margin-bottom:16px;padding:16px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--surface-soft);min-height:60px;"><p style="color:#64748b;">Selecciona un tipo de reporte y haz clic en "Vista Previa"</p></div>
+            </div>
+        </section>
+
+        <section id="section-config" class="admin-section">
+            <div class="admin-table-box">
+                <div class="table-header"><h3>⚙️ Configuración del Sistema</h3></div>
+                <div style="margin-bottom:24px;">
+                    <h4 style="margin-bottom:12px;">💳 Configuración de Pagos (Yape / Plin)</h4>
+                    <div class="admin-form-grid">
+                        <div class="form-admin-group"><label>Número Yape</label><input id="configYape" class="form-admin-input" type="text" placeholder="929514843"></div>
+                        <div class="form-admin-group"><label>Número Plin</label><input id="configPlin" class="form-admin-input" type="text" placeholder="929514843"></div>
+                        <div class="form-admin-group"><label>Titular de la Cuenta</label><input id="configTitular" class="form-admin-input" type="text" placeholder="MaskoVet S.A.C."></div>
+                        <div class="form-admin-group" style="justify-content:flex-end;"><button class="btn btn-primary" onclick="EmpresaApp.guardarConfigPagos()">💾 Guardar Configuración</button></div>
+                    </div>
+                </div>
+                <div style="border-top:1px solid var(--border-color);padding-top:24px;">
+                    <h4 style="margin-bottom:12px;">📊 Stock / Inventario</h4>
+                    <div id="reportPreview" style="margin-bottom:12px;"></div>
+                    <div class="table-wrapper"><table class="excel-table"><thead><tr><th>Producto</th><th>Stock</th><th>Stock Mínimo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="table-stock-body"></tbody></table></div>
+                </div>
+                <div style="border-top:1px solid var(--border-color);padding-top:24px;margin-top:24px;">
+                    <h4 style="margin-bottom:12px;">🔔 Últimas Notificaciones del Sistema</h4>
+                    <div id="notificacionesAdminContainer"></div>
+                </div>
+                <div style="border-top:1px solid var(--border-color);padding-top:24px;margin-top:24px;">
+                    <h4 style="margin-bottom:12px;">⚠️ Acciones de Sistema</h4>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn btn-outline" onclick="if(confirm('¿Resincronizar datos?')){location.reload();}">🔄 Resincronizar Datos</button>
+                        <button class="btn btn-danger" onclick="if(confirm('¿Cerrar sesión?')){EmpresaApp.logout();}">🚪 Cerrar Sesión</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer style="text-align:center;padding:24px 0;color:#64748b;font-size:0.85rem;border-top:1px solid #e2e8f0;margin-top:32px;">
+            <p>🐾 MaskoVet - Cuidamos a quienes amas</p>
+            <p>© 2026 MaskoVet S.A.C. Todos los derechos reservados.</p>
+        </footer>
+    </main>
+</div>
+
+<!-- ========================================================================== -->
+<!-- MODALES -->
+<!-- ========================================================================== -->
+
+<div id="modal-servicio" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>🩺 Nuevo Servicio</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-servicio')">✕</button></div>
+        <form id="form-nuevo-servicio" onsubmit="EmpresaApp.guardarServicio(event)">
+            <div class="form-admin-group"><label>Nombre del Servicio <span class="required">*</span></label><input type="text" id="srv-nombre" class="form-admin-input" placeholder="Ej: Ecografía Abdominal" required></div>
+            <div class="form-admin-group"><label>Costo (S/.) <span class="required">*</span></label><input type="number" id="srv-costo" class="form-admin-input" placeholder="80.00" step="0.01" required></div>
+            <div class="form-admin-group"><label>Duración Estimada <span class="required">*</span></label><input type="text" id="srv-duracion" class="form-admin-input" placeholder="45 min" required></div>
+            <div class="form-admin-group"><label>Categoría</label><input type="text" id="srv-categoria" class="form-admin-input" placeholder="Consulta, Grooming, etc."></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-servicio')">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Servicio</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-servicio-edit" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>✏️ Editar Servicio</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-servicio-edit')">✕</button></div>
+        <form id="form-editar-servicio" onsubmit="EmpresaApp.guardarEdicionServicio(event)">
+            <input type="hidden" id="edit-srv-id">
+            <div class="form-admin-group"><label>Nombre del Servicio <span class="required">*</span></label><input type="text" id="edit-srv-nombre" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Costo (S/.) <span class="required">*</span></label><input type="number" id="edit-srv-costo" class="form-admin-input" step="0.01" required></div>
+            <div class="form-admin-group"><label>Duración Estimada <span class="required">*</span></label><input type="text" id="edit-srv-duracion" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Categoría</label><input type="text" id="edit-srv-categoria" class="form-admin-input" placeholder="Consulta, Grooming, etc."></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-servicio-edit')">Cancelar</button><button type="submit" class="btn btn-primary">Actualizar Servicio</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-producto" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>🛍️ Nuevo Producto</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-producto')">✕</button></div>
+        <form id="form-nuevo-producto" onsubmit="EmpresaApp.guardarProducto(event)">
+            <div class="form-admin-group"><label>Nombre del Producto <span class="required">*</span></label><input type="text" id="prod-nombre" class="form-admin-input" placeholder="Ej: Collar Antipulgas" required></div>
+            <div class="form-admin-group"><label>Categoría <span class="required">*</span></label><select id="prod-categoria" class="form-admin-input"><option value="Alimentos">Alimentos</option><option value="Higiene">Higiene / Cuidado</option><option value="Accesorios">Accesorios</option><option value="Medicinas">Medicinas</option></select></div>
+            <div class="form-admin-group"><label>Precio (S/.) <span class="required">*</span></label><input type="number" id="prod-precio" class="form-admin-input" placeholder="140.00" step="0.01" required></div>
+            <div class="form-admin-group"><label>Stock Inicial <span class="required">*</span></label><input type="number" id="prod-stock" class="form-admin-input" placeholder="20" required></div>
+            <div class="form-admin-group"><label>Descripción</label><input type="text" id="prod-descripcion" class="form-admin-input" placeholder="Descripción del producto"></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-producto')">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Producto</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-producto-edit" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>✏️ Editar Producto</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-producto-edit')">✕</button></div>
+        <form id="form-editar-producto" onsubmit="EmpresaApp.guardarEdicionProducto(event)">
+            <input type="hidden" id="edit-prod-id">
+            <div class="form-admin-group"><label>Nombre del Producto <span class="required">*</span></label><input type="text" id="edit-prod-nombre" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Categoría <span class="required">*</span></label><select id="edit-prod-categoria" class="form-admin-input"><option value="Alimentos">Alimentos</option><option value="Higiene">Higiene / Cuidado</option><option value="Accesorios">Accesorios</option><option value="Medicinas">Medicinas</option></select></div>
+            <div class="form-admin-group"><label>Precio (S/.) <span class="required">*</span></label><input type="number" id="edit-prod-precio" class="form-admin-input" step="0.01" required></div>
+            <div class="form-admin-group"><label>Stock <span class="required">*</span></label><input type="number" id="edit-prod-stock" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Descripción</label><input type="text" id="edit-prod-descripcion" class="form-admin-input" placeholder="Descripción del producto"></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-producto-edit')">Cancelar</button><button type="submit" class="btn btn-primary">Actualizar Producto</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-cliente" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>👤 Nuevo Cliente</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-cliente')">✕</button></div>
+        <form id="form-cliente" onsubmit="EmpresaApp.guardarCliente(event)">
+            <div class="form-admin-group"><label>Nombres <span class="required">*</span></label><input type="text" id="cliente-nombres" class="form-admin-input" placeholder="Juan" required></div>
+            <div class="form-admin-group"><label>Apellidos <span class="required">*</span></label><input type="text" id="cliente-apellidos" class="form-admin-input" placeholder="Pérez" required></div>
+            <div class="form-admin-group"><label>Correo <span class="required">*</span></label><input type="email" id="cliente-correo" class="form-admin-input" placeholder="correo@ejemplo.com" required></div>
+            <div class="form-admin-group"><label>Teléfono <span class="required">*</span></label><input type="tel" id="cliente-telefono" class="form-admin-input" placeholder="987654321" required></div>
+            <div class="form-admin-group"><label>Contraseña <span class="required">*</span></label><input type="password" id="cliente-password" class="form-admin-input" placeholder="••••••••" minlength="6" required></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-cliente')">Cancelar</button><button type="submit" class="btn btn-primary">Registrar Cliente</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-cliente-edit" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>✏️ Editar Cliente</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-cliente-edit')">✕</button></div>
+        <form id="form-editar-cliente" onsubmit="EmpresaApp.guardarEdicionCliente(event)">
+            <input type="hidden" id="edit-cliente-id">
+            <div class="form-admin-group"><label>Nombres <span class="required">*</span></label><input type="text" id="edit-cliente-nombres" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Apellidos <span class="required">*</span></label><input type="text" id="edit-cliente-apellidos" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Correo <span class="required">*</span></label><input type="email" id="edit-cliente-correo" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Teléfono <span class="required">*</span></label><input type="tel" id="edit-cliente-telefono" class="form-admin-input" required></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-cliente-edit')">Cancelar</button><button type="submit" class="btn btn-primary">Actualizar Cliente</button></div>
+        </form>
+    </div>
+</div>
+
+<script src="../core/js/utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../core/js/db.js"></script>
+<script src="js/empresa-app.js"></script>
+
+<script>
+function cambiarSeccion(section) {
+    document.querySelectorAll('.admin-menu li').forEach(li => {
+        li.classList.toggle('active', li.dataset.section === section);
+    });
+    document.querySelectorAll('.admin-section').forEach(el => {
+        el.classList.toggle('active', el.id === `section-${section}`);
+    });
+    const titles = {
+        'dashboard': { title: 'Dashboard', subtitle: 'Panel de Control' },
+        'clientes': { title: 'Clientes', subtitle: 'Gestión de clientes' },
+        'mascotas': { title: 'Mascotas', subtitle: 'Gestión de mascotas' },
+        'servicios': { title: 'Servicios', subtitle: 'Gestión de servicios' },
+        'productos': { title: 'Productos', subtitle: 'Gestión de productos' },
+        'citas': { title: 'Citas', subtitle: 'Gestión de citas' },
+        'clinica': { title: 'Clínica', subtitle: 'Historial clínico' },
+        'pagos': { title: 'Pagos', subtitle: 'Validación de pagos' },
+        'ventas': { title: 'Ventas', subtitle: 'Historial de ventas' },
+        'personal': { title: 'Personal', subtitle: 'Gestión de personal' },
+        'reportes': { title: 'Reportes', subtitle: 'Reportes y exportación' },
+        'config': { title: 'Configuración', subtitle: 'Configuración del sistema' }
+    };
+    const info = titles[section] || titles.dashboard;
+    document.getElementById('seccionTitulo').textContent = info.title;
+    document.getElementById('seccionSubtitulo').textContent = info.subtitle;
+    if (window.innerWidth <= 768) {
+        document.getElementById('sidebarAdmin')?.classList.remove('open');
+    }
+}
+
+function toggleSidebarAdmin() {
+    const sidebar = document.getElementById('sidebarAdmin');
+    if (sidebar) {
+        sidebar.classList.toggle('open');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const sidebar = document.getElementById('sidebarAdmin');
+    const hamburger = document.querySelector('.hamburger-admin');
+    if (window.innerWidth <= 768 && sidebar && hamburger) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('open');
+        }
+    }
+});
+
+function showAlert(message, type = "info", duration = 3200) {
+    const container = document.querySelector('.toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icons = { success: '✅', error: '❌', warning: '⚠️', info: '🔔' };
+    const titles = { success: 'Éxito', error: 'Error', warning: 'Advertencia', info: 'Información' };
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <div class="toast-content">
+            <div class="toast-title">${titles[type]}</div>
+            <div class="toast-message">${escapeHtml(message)}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+    `;
+    container.appendChild(toast);
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    });
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    cambiarSeccion('dashboard');
+    document.getElementById('fechaActual').textContent = new Date().toLocaleDateString('es-PE', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+});
+
+console.log('✅ MaskoVet Enterprise Dashboard loaded successfully');
+</script>
+
+</body>
+</html>

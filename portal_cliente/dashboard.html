@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Cliente - MaskoVet</title>
+    <link rel="stylesheet" href="../core/css/variables.css">
+    <link rel="stylesheet" href="css/cliente-styles.css">
+    <style>
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 560px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 48px -12px rgba(0,0,0,0.15);
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-close:hover {
+            color: #1e293b;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        #paymentTotal {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #10B981;
+            transition: all 0.3s ease;
+        }
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: 100%;
+        }
+        .toast {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid #1E5EFF;
+        }
+        .toast.success { border-left-color: #10B981; }
+        .toast.error { border-left-color: #EF4444; }
+        .toast.warning { border-left-color: #F59E0B; }
+        .toast.info { border-left-color: #1E5EFF; }
+        .toast-icon { font-size: 1.5rem; line-height: 1; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.9rem; color: #111827; }
+        .toast-message { font-size: 0.85rem; color: #6B7280; margin-top: 2px; }
+        .toast-close { background: none; border: none; color: #64748B; cursor: pointer; font-size: 1.2rem; padding: 0 4px; }
+        .toast-close:hover { color: #111827; }
+        .payment-total-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .payment-total-wrapper .label {
+            font-size: 0.9rem;
+            color: #64748B;
+            font-weight: 600;
+        }
+        .payment-total-wrapper .total-animated {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #10B981;
+            transition: all 0.3s ease;
+        }
+        .menu-badge#notificacionesBadge {
+            display: none;
+        }
+        .menu-badge#notificacionesBadge:not(:empty) {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+
+<button class="hamburger-btn" onclick="toggleSidebarMobile()">☰</button>
+
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <span class="logo-icon">🐾</span>
+            <span class="logo-text">MaskoVet</span>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item active" data-section="dashboard" onclick="cambiarSeccion('dashboard')">
+                <span class="menu-icon">📊</span>
+                <span class="menu-label">Dashboard</span>
+            </div>
+            <div class="menu-item" data-section="mascotas" onclick="cambiarSeccion('mascotas')">
+                <span class="menu-icon">🐾</span>
+                <span class="menu-label">Mis Mascotas</span>
+                <span class="menu-badge" id="mascotasBadge">0</span>
+            </div>
+            <div class="menu-item" data-section="tienda" onclick="cambiarSeccion('tienda')">
+                <span class="menu-icon">🛍️</span>
+                <span class="menu-label">Tienda</span>
+            </div>
+            <div class="menu-item" data-section="citas" onclick="cambiarSeccion('citas')">
+                <span class="menu-icon">📅</span>
+                <span class="menu-label">Citas</span>
+                <span class="menu-badge" id="citasBadge">0</span>
+            </div>
+            <div class="menu-item" data-section="historial" onclick="cambiarSeccion('historial')">
+                <span class="menu-icon">📋</span>
+                <span class="menu-label">Historial</span>
+            </div>
+            <div class="menu-item" data-section="pagos" onclick="cambiarSeccion('pagos')">
+                <span class="menu-icon">💳</span>
+                <span class="menu-label">Pagos</span>
+            </div>
+            <div class="menu-item" data-section="notificaciones" onclick="cambiarSeccion('notificaciones')">
+                <span class="menu-icon">🔔</span>
+                <span class="menu-label">Notificaciones</span>
+                <span class="menu-badge" id="notificacionesBadge">0</span>
+            </div>
+            <div class="menu-item" data-section="perfil" onclick="cambiarSeccion('perfil')">
+                <span class="menu-icon">👤</span>
+                <span class="menu-label">Mi Perfil</span>
+            </div>
+            <button class="btn btn-danger btn-full" onclick="logoutCliente()" style="margin-top:16px;">🚪 Cerrar Sesión</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div class="topbar-left">
+                <span class="eyebrow" id="seccionTitulo">Dashboard</span>
+                <h1 id="seccionSubtitulo">Bienvenido a MaskoVet</h1>
+            </div>
+            <div class="topbar-actions">
+                <input type="text" class="search-pill" id="searchGlobal" placeholder="🔎 Buscar en tu portal..." oninput="buscarGlobal(this.value)">
+                <div class="user-box" onclick="cambiarSeccion('perfil')">
+                    <div class="user-avatar" id="userAvatar">C</div>
+                    <span id="clienteNombre">Cliente</span>
+                </div>
+            </div>
+        </header>
+
+        <section id="section-dashboard" class="section-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🐾</div>
+                    <h3>Mascotas</h3>
+                    <div class="value" id="totalMascotas">0</div>
+                    <span class="stat-change positive">+0 este mes</span>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <h3>Citas</h3>
+                    <div class="value" id="totalCitas">0</div>
+                    <span class="stat-change positive" id="proximaCita">Próxima: --</span>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🛍️</div>
+                    <h3>Pedidos</h3>
+                    <div class="value" id="totalPedidos">0</div>
+                    <span class="stat-change positive">Compras realizadas</span>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔔</div>
+                    <h3>Notificaciones</h3>
+                    <div class="value" id="totalNotificaciones">0</div>
+                    <span class="stat-change" id="notificacionesEstado">Sin notificaciones</span>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">📢 Novedades</h2>
+                </div>
+                <div id="novedadesContainer">
+                    <div class="notification-item">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                            <div>
+                                <strong>🎉 Bienvenido a MaskoVet</strong>
+                                <div>Estamos felices de tenerte con nosotros. Explora todos nuestros servicios.</div>
+                                <div class="notification-time">Hoy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-mascotas" class="section-container" style="display: none;">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">🐾 Mis Mascotas</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary btn-sm" onclick="abrirFormularioMascota()">+ Agregar Mascota</button>
+                    </div>
+                </div>
+                <div id="mascotasContainer" class="pet-grid"></div>
+            </div>
+        </section>
+
+        <section id="section-tienda" class="section-container" style="display: none;">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">🛍️ Tienda</h2>
+                </div>
+                <div class="form-grid two" style="margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label>Buscar</label>
+                        <input type="text" id="searchProductos" placeholder="Buscar productos o servicios..." oninput="actualizarFiltroProductos(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="filtroCategoriaProducto" onchange="actualizarFiltroCategoria(this.value)">
+                            <option value="Todos">Todos</option>
+                        </select>
+                    </div>
+                </div>
+                <h3 style="margin: 16px 0 12px;">Productos</h3>
+                <div id="productosContainer" class="product-grid"></div>
+                <h3 style="margin: 24px 0 12px;">Servicios</h3>
+                <div id="serviciosContainer" class="service-grid"></div>
+            </div>
+        </section>
+
+        <section id="section-citas" class="section-container" style="display: none;">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">📅 Mis Citas</h2>
+                </div>
+                <div id="citasContainer" class="citas-list"></div>
+            </div>
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">📅 Agendar Nueva Cita</h2>
+                </div>
+                <div class="agenda-summary" id="agendaSummary">
+                    <span>Selecciona una fecha para ver los horarios disponibles</span>
+                </div>
+                <form id="formCita" onsubmit="reservarCitaDesdeFormulario(); return false;">
+                    <div class="form-grid two">
+                        <div class="form-group">
+                            <label class="required">Fecha</label>
+                            <input type="date" id="fechaCita" onchange="renderDisponibilidadAgenda()" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Mascota</label>
+                            <select id="mascotaCita" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Servicio</label>
+                            <select id="servicioCita" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Hora seleccionada</label>
+                            <input type="text" id="horaCita" placeholder="Selecciona un horario" readonly style="background: #F8FAFC; cursor: pointer;">
+                        </div>
+                    </div>
+                    <input type="hidden" id="citaEditandoId" value="">
+                    <div class="agenda-grid" id="agendaSlots"></div>
+                    <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button type="submit" class="btn btn-primary" id="btnReservarCita">📅 Reservar Cita</button>
+                        <button type="button" class="btn btn-outline" onclick="cancelarEdicionCita()" id="btnCancelarEdicion" style="display: none;">Cancelar Edición</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="section-historial" class="section-container" style="display: none;">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">📋 Historial Clínico</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary btn-sm" onclick="abrirFormularioHistorial()">+ Agregar Registro</button>
+                    </div>
+                </div>
+                <div id="historialContainer"></div>
+            </div>
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">🛍️ Historial de Compras</h2>
+                </div>
+                <div id="historialComprasContainer"></div>
+            </div>
+        </section>
+
+        <section id="section-pagos" class="section-container" style="display: none;">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">💳 Pagos y Comprobantes</h2>
+                </div>
+                <div class="payment-box">
+                    <h3 style="margin-top: 0;">🛒 Resumen del Carrito</h3>
+                    <p>Artículos: <strong id="carritoItems">0</strong></p>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #10B981;" id="carritoTotal">S/ 0.00</div>
+                    <div id="carritoItemsList" style="margin: 12px 0;"></div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0;">
+                        <button class="btn btn-danger btn-sm" onclick="limpiarCarrito()">🗑️ Vaciar Carrito</button>
+                    </div>
+                </div>
+                <div class="payment-box" style="margin-top: 16px;">
+                    <h3>💳 Método de Pago</h3>
+                    <div class="payment-method">
+                        <button class="payment-method-btn active" data-method="Yape" onclick="seleccionarMetodo('Yape')">📱 Yape</button>
+                        <button class="payment-method-btn" data-method="Plin" onclick="seleccionarMetodo('Plin')">📱 Plin</button>
+                        <button class="payment-method-btn" data-method="Tarjeta" onclick="seleccionarMetodo('Tarjeta')">💳 Tarjeta</button>
+                        <button class="payment-method-btn" data-method="Efectivo" onclick="seleccionarMetodo('Efectivo')">💰 Efectivo</button>
+                    </div>
+                    <div style="margin: 12px 0;">
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Número para pago:</p>
+                        <div class="payment-number" id="paymentNumber">929 514 843</div>
+                    </div>
+                    <div style="margin: 12px 0;">
+                        <div class="payment-total-wrapper">
+                            <span class="label">Total a pagar:</span>
+                            <span class="total-animated" id="paymentTotal">S/ 0.00</span>
+                        </div>
+                    </div>
+                    <div id="comprobanteSection" style="margin: 16px 0;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #64748b;">📎 Subir Comprobante (JPG, PNG, PDF)</label>
+                        <input type="file" id="paymentFile" accept=".jpg,.jpeg,.png,.pdf" onchange="manejarComprobante(event)">
+                        <div id="comprobanteStatus" style="font-size: 0.85rem; margin-top: 4px;"></div>
+                    </div>
+                    <button class="btn btn-success btn-full" onclick="subirComprobante()" style="margin-top: 8px;">✅ Confirmar Pago y Enviar</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-notificaciones" class="section-container" style="display: none;">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">🔔 Notificaciones</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-outline btn-sm" onclick="marcarTodasNotificaciones()">✓ Marcar todas leídas</button>
+                    </div>
+                </div>
+                <div id="notificacionesContainer"></div>
+            </div>
+        </section>
+
+        <section id="section-perfil" class="section-container" style="display: none;">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2 class="section-title">👤 Mi Perfil</h2>
+                </div>
+                <div id="profileBox"></div>
+            </div>
+        </section>
+
+        <footer style="text-align: center; padding: 24px 0; color: #64748b; font-size: 0.85rem; border-top: 1px solid #e2e8f0; margin-top: 32px;">
+            <p>🐾 MaskoVet - Cuidamos a quienes amas</p>
+            <p>© 2026 MaskoVet S.A.C. Todos los derechos reservados.</p>
+        </footer>
+
+    </main>
+</div>
+
+<script src="../core/js/utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../core/js/db.js"></script>
+<script src="js/cliente-app.js"></script>
+
+<script>
+function cambiarSeccion(section) {
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.section === section);
+    });
+    
+    document.querySelectorAll('.section-container').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    const target = document.getElementById(`section-${section}`);
+    if (target) {
+        target.style.display = 'block';
+    }
+    
+    const titles = {
+        'dashboard': { title: 'Dashboard', subtitle: 'Bienvenido a MaskoVet' },
+        'mascotas': { title: 'Mis Mascotas', subtitle: 'Gestiona tus mascotas' },
+        'tienda': { title: 'Tienda', subtitle: 'Productos y servicios disponibles' },
+        'citas': { title: 'Citas', subtitle: 'Agenda y gestiona tus citas' },
+        'historial': { title: 'Historial', subtitle: 'Historial clínico y de compras' },
+        'pagos': { title: 'Pagos', subtitle: 'Gestiona tus pagos y comprobantes' },
+        'notificaciones': { title: 'Notificaciones', subtitle: 'Mantente informado' },
+        'perfil': { title: 'Mi Perfil', subtitle: 'Gestiona tu información personal' }
+    };
+    
+    const info = titles[section] || titles.dashboard;
+    document.getElementById('seccionTitulo').textContent = info.title;
+    document.getElementById('seccionSubtitulo').textContent = info.subtitle;
+    
+    if (window.innerWidth <= 768) {
+        document.getElementById('sidebar')?.classList.remove('open');
+    }
+}
+
+function buscarGlobal(term) {
+    if (!term || term.length < 2) {
+        document.querySelectorAll('.section-container').forEach(el => {
+            el.style.display = 'block';
+        });
+        return;
+    }
+    
+    const termLower = term.toLowerCase().trim();
+    let found = false;
+    
+    document.querySelectorAll('.section-container').forEach(el => {
+        const text = el.textContent.toLowerCase();
+        if (text.includes(termLower)) {
+            el.style.display = 'block';
+            found = true;
+        } else {
+            el.style.display = 'none';
+        }
+    });
+    
+    if (!found) {
+        const dashboard = document.getElementById('section-dashboard');
+        dashboard.style.display = 'block';
+        dashboard.innerHTML = `
+            <div class="section-card" style="text-align: center; padding: 60px 20px;">
+                <span style="font-size: 4rem;">🔍</span>
+                <h3>No se encontraron resultados</h3>
+                <p style="color: #64748b;">Intenta con otra palabra clave</p>
+            </div>
+        `;
+    }
+}
+
+function toggleSidebarMobile() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('open');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const sidebar = document.getElementById('sidebar');
+    const hamburger = document.querySelector('.hamburger-btn');
+    if (window.innerWidth <= 768 && sidebar && hamburger) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('open');
+        }
+    }
+});
+
+function cancelarEdicionCita() {
+    document.getElementById('citaEditandoId').value = '';
+    document.getElementById('btnCancelarEdicion').style.display = 'none';
+    document.getElementById('horaCita').value = '';
+    document.getElementById('fechaCita').value = '';
+    document.getElementById('btnReservarCita').textContent = '📅 Reservar Cita';
+    renderDisponibilidadAgenda();
+    showAlert('Edición cancelada', 'info');
+}
+
+function showAlert(message, type = "info", duration = 3200) {
+    const container = document.querySelector('.toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = { success: '✅', error: '❌', warning: '⚠️', info: '🔔' };
+    const titles = { success: 'Éxito', error: 'Error', warning: 'Advertencia', info: 'Información' };
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <div class="toast-content">
+            <div class="toast-title">${titles[type]}</div>
+            <div class="toast-message">${escapeHtml(message)}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+    `;
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    });
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    cambiarSeccion('dashboard');
+    
+    const session = getFromStorage('maskovet_session');
+    if (!session || !session.usuario) {
+        if (!window.location.pathname.includes('login.html')) {
+            window.location.href = 'login.html';
+        }
+    }
+});
+
+console.log('✅ MaskoVet Dashboard (corregido) loaded successfully');
+</script>
+
+</body>
+</html>

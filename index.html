@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MaskoVet - Veterinaria Digital en Trujillo. Gestiona citas, productos, pagos y seguimiento clínico para tu mascota.">
+    <meta name="theme-color" content="#1E5EFF">
+    <meta name="keywords" content="veterinaria Trujillo, mascotas, consulta veterinaria, grooming, vacunación, MaskoVet">
+    <meta name="author" content="MaskoVet S.A.C.">
+    
+    <title>MaskoVet | Veterinaria Digital</title>
+    
+    <!-- ========== FONTS ========== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- ========== CSS ========== -->
+    <link rel="stylesheet" href="core/css/variables.css">
+    
+    <!-- ========== FAVICON ========== -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+    
+    <!-- ========== OPEN GRAPH ========== -->
+    <meta property="og:title" content="MaskoVet - Veterinaria Digital">
+    <meta property="og:description" content="Cuidamos a quienes amas. Servicios veterinarios de calidad para tu mascota.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://maskovet.com">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=1200&auto=format&fit=crop">
+
+    <style>
+        /* ===== RESET Y BASE ===== */
+        * { 
+            box-sizing: border-box; 
+            margin: 0;
+            padding: 0;
+        }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #F8FAFF 0%, #F4F7FB 100%); 
+            color: var(--text-dark, #111827);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--surface-soft, #F8FAFC);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300, #D1D5DB);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400, #9CA3AF);
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 16px 50px; 
+            background: rgba(255, 255, 255, 0.95); 
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05)); 
+            position: sticky; 
+            top: 0; 
+            z-index: 50;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color, #E2E8F0);
+            transition: box-shadow var(--transition, 0.3s);
+        }
+        
+        .navbar.scrolled {
+            box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08));
+        }
+
+        .logo { 
+            font-size: 1.6rem; 
+            font-weight: 800; 
+            color: var(--primary-color, #1E5EFF);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .logo span {
+            background: linear-gradient(135deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links { 
+            display: flex; 
+            gap: 28px; 
+            align-items: center;
+        }
+        
+        .nav-links a { 
+            text-decoration: none; 
+            color: var(--text-dark, #111827); 
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all var(--transition-fast, 0.2s);
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary-color, #1E5EFF);
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color, #1E5EFF);
+            transition: width var(--transition, 0.3s);
+        }
+        
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-actions .btn {
+            padding: 10px 20px;
+            font-size: 0.85rem;
+        }
+
+        /* ===== BOTONES GLOBALES ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-md, 12px);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition-fast, 0.2s);
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1));
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5));
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 24px rgba(30, 94, 255, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color, #10B981), #059669);
+            color: #FFFFFF;
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-color, #1E5EFF);
+            border: 2px solid var(--primary-color, #1E5EFF);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-color, #1E5EFF);
+            color: #FFFFFF;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+        }
+
+        .btn-lg {
+            padding: 16px 32px;
+            font-size: 1.05rem;
+        }
+
+        /* ===== HERO ===== */
+        .hero { 
+            display: grid; 
+            grid-template-columns: 1.1fr 0.9fr; 
+            align-items: center; 
+            gap: 48px; 
+            padding: 80px 60px; 
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: 80vh;
+        }
+        
+        .hero h1 { 
+            font-size: 3.5rem; 
+            margin-bottom: 20px; 
+            color: var(--text-dark, #111827);
+            line-height: 1.15;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p { 
+            font-size: 1.15rem; 
+            color: var(--text-light, #6B7280); 
+            margin-bottom: 28px; 
+            line-height: 1.8;
+            max-width: 540px;
+        }
+        
+        .hero-image-wrapper {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-premium, 0 24px 60px rgba(15, 23, 42, 0.12));
+        }
+        
+        .hero-image-wrapper img { 
+            width: 100%; 
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+        
+        .hero-image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+        
+        .hero-image-wrapper .badge {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: var(--radius-md, 12px);
+            box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1));
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-dark, #111827);
+        }
+        
+        .hero-image-wrapper .badge span {
+            color: var(--success-color, #10B981);
+        }
+
+        .hero .buttons { 
+            display: flex; 
+            gap: 14px; 
+            flex-wrap: wrap; 
+        }
+
+        /* ===== STATS ===== */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            padding: 40px 60px;
+            max-width: 1400px;
+            margin: 0 auto 40px;
+            background: var(--surface, #FFFFFF);
+            border-radius: var(--radius-xl, 24px);
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04));
+            border: 1px solid var(--border-color, #E2E8F0);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color, #1E5EFF);
+            background: linear-gradient(135deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-item .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted, #64748B);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* ===== SECCIONES ===== */
+        .section { 
+            padding: 80px 60px; 
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .section-header h2 { 
+            font-size: 2.5rem; 
+            color: var(--text-dark, #111827);
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        
+        .section-header p {
+            color: var(--text-light, #6B7280);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section-header .section-badge {
+            display: inline-block;
+            background: var(--primary-light, #EBF1FF);
+            color: var(--primary-color, #1E5EFF);
+            padding: 4px 16px;
+            border-radius: var(--radius-full, 9999px);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        /* ===== CARDS ===== */
+        .cards { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); 
+            gap: 24px; 
+        }
+        
+        .service-card { 
+            background: var(--surface, #FFFFFF); 
+            padding: 32px 28px; 
+            border-radius: var(--radius-lg, 20px); 
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04)); 
+            border: 1px solid var(--border-color, #E2E8F0);
+            transition: all var(--transition, 0.3s);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5));
+            opacity: 0;
+            transition: opacity var(--transition, 0.3s);
+        }
+        
+        .service-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg, 0 12px 24px rgba(30, 94, 255, 0.12));
+            border-color: var(--primary-color, #1E5EFF);
+        }
+        
+        .service-card:hover::before {
+            opacity: 1;
+        }
+        
+        .service-card .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+        
+        .service-card h3 { 
+            margin-bottom: 10px;
+            color: var(--text-dark, #111827);
+            font-size: 1.2rem;
+        }
+        
+        .service-card p {
+            color: var(--text-light, #6B7280);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        /* ===== ABOUT / HISTORIA ===== */
+        .about-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 24px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        
+        .about-card { 
+            background: var(--surface, #FFFFFF); 
+            padding: 32px; 
+            border-radius: var(--radius-lg, 20px); 
+            border: 1px solid var(--border-color, #E2E8F0); 
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04)); 
+            line-height: 1.7;
+            transition: all var(--transition, 0.3s);
+        }
+        
+        .about-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md, 0 8px 16px rgba(0,0,0,0.08));
+            border-color: var(--primary-color, #1E5EFF);
+        }
+        
+        .about-card .about-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        
+        .about-card h3 { 
+            margin-top: 0; 
+            color: var(--primary-color, #1E5EFF);
+            font-size: 1.3rem;
+        }
+        
+        .about-card p {
+            color: var(--text-light, #6B7280);
+            margin: 0;
+        }
+
+        .story { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: var(--surface, #FFFFFF); 
+            padding: 40px; 
+            border-radius: var(--radius-lg, 20px); 
+            border: 1px solid var(--border-color, #E2E8F0); 
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04)); 
+            line-height: 1.8; 
+            color: var(--text-light, #6B7280);
+            font-size: 1.05rem;
+        }
+        
+        .story p {
+            margin-bottom: 16px;
+        }
+        
+        .story p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ===== TESTIMONIOS ===== */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: var(--surface, #FFFFFF);
+            padding: 28px;
+            border-radius: var(--radius-lg, 20px);
+            border: 1px solid var(--border-color, #E2E8F0);
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04));
+            transition: all var(--transition, 0.3s);
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md, 0 8px 16px rgba(0,0,0,0.08));
+        }
+
+        .testimonial-card .stars {
+            color: #F59E0B;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .testimonial-card blockquote {
+            font-style: italic;
+            color: var(--text-dark, #111827);
+            margin: 0 0 12px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .testimonial-card .author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-card .author .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-full, 9999px);
+            background: linear-gradient(135deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .testimonial-card .author .name {
+            font-weight: 600;
+            color: var(--text-dark, #111827);
+        }
+
+        .testimonial-card .author .role {
+            font-size: 0.8rem;
+            color: var(--text-muted, #64748B);
+        }
+
+        /* ===== CONTACTO ===== */
+        .contact-card { 
+            background: var(--surface, #FFFFFF); 
+            padding: 40px; 
+            border-radius: var(--radius-xl, 24px); 
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04)); 
+            border: 1px solid var(--border-color, #E2E8F0); 
+            max-width: 1000px; 
+            margin: 0 auto; 
+        }
+        
+        .contact-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 18px; 
+            margin-top: 24px; 
+        }
+        
+        .contact-item { 
+            background: var(--surface-soft, #F8FAFC); 
+            border: 1px solid var(--border-color, #E2E8F0); 
+            border-radius: var(--radius-lg, 18px); 
+            padding: 20px; 
+            display: flex; 
+            gap: 14px; 
+            align-items: flex-start;
+            transition: all var(--transition, 0.3s);
+        }
+        
+        .contact-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-color, #1E5EFF);
+            box-shadow: var(--shadow-sm, 0 4px 12px rgba(0,0,0,0.05));
+        }
+        
+        .contact-icon { 
+            width: 48px; 
+            height: 48px; 
+            border-radius: var(--radius-md, 14px); 
+            display: grid; 
+            place-items: center; 
+            font-size: 1.2rem; 
+            color: #FFFFFF; 
+            background: linear-gradient(135deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5)); 
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(30, 94, 255, 0.2)); 
+            flex-shrink: 0; 
+        }
+        
+        .contact-item h3 { 
+            margin: 0 0 4px; 
+            font-size: 1rem; 
+            color: var(--text-dark, #111827); 
+        }
+        
+        .contact-item p, .contact-item a { 
+            margin: 0; 
+            color: var(--text-light, #6B7280); 
+            text-decoration: none; 
+            line-height: 1.6; 
+            font-size: 0.9rem;
+        }
+        
+        .contact-item a:hover {
+            color: var(--primary-color, #1E5EFF);
+        }
+
+        .contact-actions { 
+            display: flex; 
+            gap: 14px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            margin-top: 28px; 
+        }
+
+        /* ===== MAPA ===== */
+        .map-container {
+            border-radius: var(--radius-lg, 20px);
+            overflow: hidden;
+            border: 1px solid var(--border-color, #E2E8F0);
+            margin-top: 24px;
+            box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.04));
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+            display: block;
+        }
+
+        /* ===== FOOTER ===== */
+        footer { 
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); 
+            color: #FFFFFF; 
+            padding: 48px 60px 32px;
+            margin-top: 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto 32px;
+        }
+
+        .footer-grid h4 {
+            margin: 0 0 12px;
+            font-size: 1.1rem;
+            color: #FFFFFF;
+        }
+
+        .footer-grid p, .footer-grid a {
+            color: #94A3B8;
+            text-decoration: none;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            display: block;
+        }
+
+        .footer-grid a:hover {
+            color: #FFFFFF;
+        }
+
+        .footer-grid .social-links {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .footer-grid .social-links a {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full, 9999px);
+            background: rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all var(--transition-fast, 0.2s);
+        }
+
+        .footer-grid .social-links a:hover {
+            background: var(--primary-color, #1E5EFF);
+            transform: translateY(-3px);
+        }
+
+        footer .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 24px;
+            text-align: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        footer .footer-bottom p {
+            margin: 0;
+            opacity: 0.7;
+            font-size: 0.85rem;
+        }
+
+        /* ===== BOTÓN VOLVER ARRIBA ===== */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-full, 9999px);
+            background: linear-gradient(135deg, var(--primary-color, #1E5EFF), var(--secondary-color, #4F46E5));
+            color: #FFFFFF;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-md, 0 4px 12px rgba(30, 94, 255, 0.3));
+            transition: all var(--transition, 0.3s);
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg, 0 8px 24px rgba(30, 94, 255, 0.4));
+        }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: 100%;
+        }
+        .toast {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid #1E5EFF;
+        }
+        .toast.success { border-left-color: #10B981; }
+        .toast.error { border-left-color: #EF4444; }
+        .toast.warning { border-left-color: #F59E0B; }
+        .toast.info { border-left-color: #1E5EFF; }
+        .toast-icon { font-size: 1.5rem; line-height: 1; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.9rem; color: #111827; }
+        .toast-message { font-size: 0.85rem; color: #6B7280; margin-top: 2px; }
+        .toast-close { background: none; border: none; color: #64748B; cursor: pointer; font-size: 1.2rem; padding: 0 4px; }
+        .toast-close:hover { color: #111827; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .hero h1 { font-size: 2.8rem; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 30px 24px; }
+        }
+
+        @media (max-width: 900px) { 
+            .hero { grid-template-columns: 1fr; padding: 50px 24px; gap: 32px; min-height: auto; }
+            .navbar { flex-direction: column; gap: 16px; padding: 16px 24px; }
+            .nav-links { gap: 16px; font-size: 0.9rem; flex-wrap: wrap; justify-content: center; }
+            .nav-actions { flex-wrap: wrap; justify-content: center; }
+            .nav-actions .btn { padding: 8px 16px; font-size: 0.8rem; }
+            .section { padding: 50px 24px; }
+            .hero h1 { font-size: 2.2rem; }
+            .hero p { font-size: 1rem; }
+            .hero .buttons { justify-content: center; }
+            .stats-bar { grid-template-columns: 1fr 1fr; padding: 24px 16px; gap: 16px; }
+            .stat-item .stat-number { font-size: 2rem; }
+            .section-header h2 { font-size: 2rem; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+            footer { padding: 32px 24px 24px; }
+            .contact-card { padding: 24px; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 1.8rem; }
+            .stats-bar { grid-template-columns: 1fr 1fr; padding: 16px; gap: 12px; }
+            .stat-item .stat-number { font-size: 1.5rem; }
+            .stat-item .stat-label { font-size: 0.75rem; }
+            .footer-grid { grid-template-columns: 1fr; text-align: center; }
+            .footer-grid .social-links { justify-content: center; }
+            .contact-grid { grid-template-columns: 1fr; }
+            .contact-actions { flex-direction: column; align-items: stretch; }
+            .contact-actions .btn { width: 100%; justify-content: center; }
+            .hero-image-wrapper .badge { bottom: 12px; right: 12px; padding: 8px 14px; font-size: 0.75rem; }
+        }
+
+        /* ===== MODO OSCURO ===== */
+        [data-theme="dark"] body {
+            background: linear-gradient(180deg, #0B0F19 0%, #151B2C 100%);
+        }
+        [data-theme="dark"] .navbar {
+            background: rgba(21, 27, 44, 0.95);
+            border-bottom-color: var(--border-color, #24304F);
+        }
+        [data-theme="dark"] .service-card,
+        [data-theme="dark"] .about-card,
+        [data-theme="dark"] .story,
+        [data-theme="dark"] .contact-card,
+        [data-theme="dark"] .testimonial-card,
+        [data-theme="dark"] .stats-bar {
+            background: var(--surface, #151B2C);
+            border-color: var(--border-color, #24304F);
+        }
+        [data-theme="dark"] .service-card p,
+        [data-theme="dark"] .about-card p,
+        [data-theme="dark"] .story p,
+        [data-theme="dark"] .contact-item p,
+        [data-theme="dark"] .contact-item a,
+        [data-theme="dark"] .testimonial-card blockquote {
+            color: var(--text-light, #94A3B8);
+        }
+        [data-theme="dark"] .contact-item {
+            background: var(--surface-soft, #1E2640);
+            border-color: var(--border-color, #24304F);
+        }
+        [data-theme="dark"] .hero h1,
+        [data-theme="dark"] .section-header h2,
+        [data-theme="dark"] .service-card h3,
+        [data-theme="dark"] .about-card h3 {
+            color: var(--text-dark, #F8FAFC);
+        }
+        [data-theme="dark"] .hero p,
+        [data-theme="dark"] .section-header p {
+            color: var(--text-light, #94A3B8);
+        }
+        [data-theme="dark"] .btn-outline {
+            color: var(--primary-color, #1E5EFF);
+            border-color: var(--primary-color, #1E5EFF);
+        }
+        [data-theme="dark"] .btn-outline:hover {
+            background: var(--primary-color, #1E5EFF);
+            color: #FFFFFF;
+        }
+        [data-theme="dark"] .hero-image-wrapper .badge {
+            background: rgba(21, 27, 44, 0.95);
+            color: var(--text-dark, #F8FAFC);
+        }
+        [data-theme="dark"] .hero-image-wrapper .badge span {
+            color: var(--success-color, #10B981);
+        }
+        [data-theme="dark"] .map-container {
+            border-color: var(--border-color, #24304F);
+        }
+        [data-theme="dark"] .stat-item .stat-label {
+            color: var(--text-muted, #64748B);
+        }
+        [data-theme="dark"] .testimonial-card .author .name {
+            color: var(--text-dark, #F8FAFC);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+    <a href="#" class="logo">🐾 <span>MaskoVet</span></a>
+    <div class="nav-links">
+        <a href="#">Inicio</a>
+        <a href="#servicios">Servicios</a>
+        <a href="#productos">Productos</a>
+        <a href="#testimonios">Testimonios</a>
+        <a href="#contacto">Contacto</a>
+    </div>
+    <div class="nav-actions">
+        <button class="btn btn-primary" onclick="window.location.href='portal_cliente/login.html'">🐾 Portal Cliente</button>
+        <button class="btn btn-success" onclick="window.location.href='portal_empresa/login.html'">🔐 Portal Empresa</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Cambiar tema">🌓</button>
+    </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+    <div>
+        <h1>Atención veterinaria <span class="highlight">moderna</span> para tu mascota</h1>
+        <p>Gestiona citas, productos, pagos y seguimiento clínico desde una plataforma integral diseñada para clínicas y pet parents.</p>
+        <div class="buttons">
+            <button class="btn btn-primary btn-lg" onclick="window.location.href='portal_cliente/login.html'">📅 Agendar cita</button>
+            <button class="btn btn-outline btn-lg" onclick="window.location.href='portal_empresa/login.html'">🔐 Portal Empresa</button>
+        </div>
+    </div>
+    <div class="hero-image-wrapper">
+        <img src="https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=1200&auto=format&fit=crop" alt="Mascotas felices">
+        <div class="badge">⭐ <span id="heroMascotas">+500</span> mascotas atendidas</div>
+    </div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section class="stats-bar" id="stats">
+    <div class="stat-item">
+        <div class="stat-number" id="statClientes">0</div>
+        <div class="stat-label">👥 Clientes</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number" id="statMascotas">0</div>
+        <div class="stat-label">🐾 Mascotas</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number" id="statCitas">0</div>
+        <div class="stat-label">📅 Citas</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-number" id="statServicios">0</div>
+        <div class="stat-label">🩺 Servicios</div>
+    </div>
+</section>
+
+<!-- ===== NOSOTROS ===== -->
+<section class="section" id="nosotros">
+    <div class="section-header">
+        <span class="section-badge">Sobre Nosotros</span>
+        <h2>Conoce a MaskoVet</h2>
+        <p>Somos una veterinaria comprometida con el bienestar de tu mascota</p>
+    </div>
+    <div class="about-grid">
+        <div class="about-card">
+            <div class="about-icon">🏥</div>
+            <h3>MaskoVet Trujillo</h3>
+            <p>Somos una veterinaria enfocada en brindar atención cercana, responsable y profesional para mascotas y sus familias en Trujillo.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-icon">🎯</div>
+            <h3>Misión</h3>
+            <p>Cuidar la salud y bienestar de cada mascota mediante servicios veterinarios, productos de calidad y seguimiento clínico oportuno.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-icon">🌟</div>
+            <h3>Visión</h3>
+            <p>Ser una veterinaria referente en Trujillo por la confianza de sus clientes, la calidad de su atención y el uso de herramientas digitales.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== HISTORIA ===== -->
+<section class="section" id="historia">
+    <div class="section-header">
+        <span class="section-badge">Nuestra Historia</span>
+        <h2>La historia detrás de MaskoVet</h2>
+    </div>
+    <div class="story">
+        <p>MaskoVet nace para acompañar a las familias en el cuidado diario de sus mascotas, integrando consulta veterinaria, vacunación, grooming, productos y seguimiento clínico en una experiencia ordenada y accesible.</p>
+        <p>Desde <strong>Av. Moche 828, Urb. Torres Araujo</strong>, la veterinaria atiende a la comunidad de Trujillo con canales directos de contacto por WhatsApp e Instagram, brindando atención personalizada y de calidad.</p>
+        <p>Nuestro compromiso es ofrecer un servicio integral que cubra todas las necesidades de salud y bienestar de tu mascota, con profesionales capacitados y tecnología moderna.</p>
+    </div>
+</section>
+
+<!-- ===== SERVICIOS ===== -->
+<section class="section" id="servicios">
+    <div class="section-header">
+        <span class="section-badge">Servicios</span>
+        <h2>Servicios destacados</h2>
+        <p>Ofrecemos una amplia gama de servicios para el cuidado de tu mascota</p>
+    </div>
+    <div class="cards">
+        <div class="service-card">
+            <div class="card-icon">🩺</div>
+            <h3>Consulta médica</h3>
+            <p>Chequeos, diagnósticos y seguimiento profesional para mantener a tu mascota saludable.</p>
+        </div>
+        <div class="service-card">
+            <div class="card-icon">✂️</div>
+            <h3>Grooming</h3>
+            <p>Baño, corte y cuidado integral para que tu mascota luzca y se sienta increíble.</p>
+        </div>
+        <div class="service-card">
+            <div class="card-icon">💉</div>
+            <h3>Vacunación</h3>
+            <p>Protección y prevención con planes claros y rápidos para todas las edades.</p>
+        </div>
+        <div class="service-card">
+            <div class="card-icon">🚨</div>
+            <h3>Emergencias 24/7</h3>
+            <p>Atención inmediata para situaciones urgentes con personal capacitado.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== PRODUCTOS ===== -->
+<section class="section" id="productos">
+    <div class="section-header">
+        <span class="section-badge">Productos</span>
+        <h2>Productos premium</h2>
+        <p>Lo mejor para el cuidado y bienestar de tu mascota</p>
+    </div>
+    <div class="cards">
+        <div class="service-card">
+            <div class="card-icon">🍖</div>
+            <h3>Alimentos</h3>
+            <p>Nutrición premium para cada etapa de vida de tu mascota.</p>
+        </div>
+        <div class="service-card">
+            <div class="card-icon">💊</div>
+            <h3>Vitaminas</h3>
+            <p>Suplementos de calidad para la salud y bienestar integral.</p>
+        </div>
+        <div class="service-card">
+            <div class="card-icon">🧸</div>
+            <h3>Juguetes</h3>
+            <p>Entretenimiento seguro y divertido para estimular a tu mascota.</p>
+        </div>
+        <div class="service-card">
+            <div class="card-icon">🦮</div>
+            <h3>Accesorios</h3>
+            <p>Correas, collares y más para el día a día de tu mascota.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TESTIMONIOS ===== -->
+<section class="section" id="testimonios">
+    <div class="section-header">
+        <span class="section-badge">Testimonios</span>
+        <h2>Lo que dicen nuestros clientes</h2>
+        <p>La opinión de quienes confían en nosotros</p>
+    </div>
+    <div class="testimonials-grid">
+        <div class="testimonial-card">
+            <div class="stars">⭐⭐⭐⭐⭐</div>
+            <blockquote>"Excelente atención, mi mascota siempre sale feliz. El grooming es impecable y el trato es muy cálido."</blockquote>
+            <div class="author">
+                <div class="avatar">MP</div>
+                <div>
+                    <div class="name">María Pérez</div>
+                    <div class="role">Cliente desde 2024</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <div class="stars">⭐⭐⭐⭐⭐</div>
+            <blockquote>"La mejor veterinaria de Trujillo. Tienen todo lo que mi perro necesita y el seguimiento es excelente."</blockquote>
+            <div class="author">
+                <div class="avatar">JR</div>
+                <div>
+                    <div class="name">Juan Rodríguez</div>
+                    <div class="role">Cliente desde 2023</div>
+                </div>
+            </div>
+        </div>
+        <div class="testimonial-card">
+            <div class="stars">⭐⭐⭐⭐⭐</div>
+            <blockquote>"Las citas son rápidas, el personal es muy profesional y mi gata siempre está tranquila. 100% recomendado."</blockquote>
+            <div class="author">
+                <div class="avatar">LG</div>
+                <div>
+                    <div class="name">Laura Gómez</div>
+                    <div class="role">Cliente desde 2025</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CONTACTO ===== -->
+<section class="section" id="contacto">
+    <div class="section-header">
+        <span class="section-badge">Contacto</span>
+        <h2>Estamos para ayudarte</h2>
+        <p>Contáctanos por cualquiera de nuestros canales</p>
+    </div>
+    <div class="contact-card">
+        <div class="contact-grid">
+            <div class="contact-item">
+                <div class="contact-icon">🕒</div>
+                <div>
+                    <h3>Horario</h3>
+                    <p>Lunes a sábado<br>8:30 am – 6:00 pm</p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">📞</div>
+                <div>
+                    <h3>Teléfono</h3>
+                    <p><a href="tel:+51967941524">967 941 524</a></p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">📸</div>
+                <div>
+                    <h3>Instagram</h3>
+                    <p><a href="https://www.instagram.com/maskovet.trujillo/" target="_blank" rel="noopener">@maskovet.trujillo</a></p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">📍</div>
+                <div>
+                    <h3>Dirección</h3>
+                    <p>Av. Moche 828<br>Urb. Torres Araujo<br>Trujillo, Perú</p>
+                </div>
+            </div>
+        </div>
+        <div class="contact-actions">
+            <a class="btn btn-success" href="https://wa.me/51967941524?text=Hola%20MaskoVet,%20quiero%20consultar%20sobre%20una%20cita" target="_blank" rel="noopener">💬 WhatsApp</a>
+            <a class="btn btn-primary" href="https://www.google.com/maps/search/?api=1&query=Av.+Moche+828+Urb.+Torres+Araujo+Trujillo+Peru" target="_blank" rel="noopener">🗺️ Ver en Google Maps</a>
+        </div>
+        
+        <!-- Mapa -->
+        <div class="map-container">
+            <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.986681212054!2d-79.0357909!3d-8.1094009!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91ad3d8b8b8b8b8b%3A0x8b8b8b8b8b8b8b8b!2sAv.%20Moche%20828%2C%20Trujillo%2013001!5e0!3m2!1ses!2spe!4v1700000000000" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+    <div class="footer-grid">
+        <div>
+            <h4>🐾 MaskoVet</h4>
+            <p>Cuidamos a quienes amas. Servicios veterinarios de calidad para la salud y bienestar de tu mascota.</p>
+        </div>
+        <div>
+            <h4>Enlaces rápidos</h4>
+            <a href="#servicios">Servicios</a>
+            <a href="#productos">Productos</a>
+            <a href="#contacto">Contacto</a>
+            <a href="portal_cliente/login.html">Portal Cliente</a>
+            <a href="portal_empresa/login.html">Portal Empresa</a>
+        </div>
+        <div>
+            <h4>Contacto</h4>
+            <p>📞 967 941 524</p>
+            <p>📧 info@maskovet.com</p>
+            <p>📍 Av. Moche 828, Trujillo</p>
+        </div>
+        <div>
+            <h4>Síguenos</h4>
+            <div class="social-links">
+                <a href="https://www.instagram.com/maskovet.trujillo/" target="_blank" rel="noopener" aria-label="Instagram">📸</a>
+                <a href="https://wa.me/51967941524" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+                <a href="https://www.facebook.com/maskovet" target="_blank" rel="noopener" aria-label="Facebook">👍</a>
+                <a href="https://www.youtube.com/maskovet" target="_blank" rel="noopener" aria-label="YouTube">▶️</a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 MaskoVet - Todos los derechos reservados</p>
+        <p style="font-size: 0.75rem; opacity: 0.5; margin-top: 4px;">Desarrollado con ❤️ para el bienestar de tu mascota</p>
+    </div>
+</footer>
+
+<!-- ===== BOTÓN VOLVER ARRIBA ===== -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Volver arriba">⬆</button>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="core/js/utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="core/js/db.js"></script>
+
+<script>
+// ==========================================================================
+// 1. TOGGLE TEMA (OSCURO/CLARO)
+// ==========================================================================
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('maskovet_theme', newTheme);
+}
+
+// ==========================================================================
+// 2. CARGAR TEMA GUARDADO
+// ==========================================================================
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('maskovet_theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+}
+
+// ==========================================================================
+// 3. NAVBAR SCROLL EFFECT
+// ==========================================================================
+
+function handleNavbarScroll() {
+    const navbar = document.getElementById('navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+}
+
+// ==========================================================================
+// 4. BOTÓN VOLVER ARRIBA
+// ==========================================================================
+
+function handleBackToTop() {
+    const btn = document.getElementById('backToTop');
+    if (window.scrollY > 400) {
+        btn.classList.add('visible');
+    } else {
+        btn.classList.remove('visible');
+    }
+}
+
+// ==========================================================================
+// 5. ANIMACIÓN DE ESTADÍSTICAS (CONTADOR)
+// ==========================================================================
+
+function animateCounter(element, target, duration = 2000) {
+    const start = 0;
+    const startTime = performance.now();
+    const finalTarget = Math.max(0, target);
+    
+    function updateCounter(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(eased * finalTarget);
+        element.textContent = current;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        } else {
+            element.textContent = finalTarget;
+        }
+    }
+    
+    requestAnimationFrame(updateCounter);
+}
+
+// ==========================================================================
+// 6. CARGAR ESTADÍSTICAS
+// ==========================================================================
+
+function loadStats() {
+    try {
+        if (typeof DB === 'undefined') {
+            console.warn('DB no disponible, reintentando...');
+            setTimeout(loadStats, 500);
+            return;
+        }
+        
+        const clientes = DB.usuarios ? DB.usuarios.filter(u => u.rol === 'cliente').length : 0;
+        const mascotas = DB.mascotas ? DB.mascotas.length : 0;
+        const citas = DB.citas ? DB.citas.length : 0;
+        const servicios = DB.servicios ? DB.servicios.length : 0;
+        
+        const heroMascotas = document.getElementById('heroMascotas');
+        if (heroMascotas) {
+            heroMascotas.textContent = `+${mascotas > 0 ? mascotas : 500}`;
+        }
+        
+        const statClientes = document.getElementById('statClientes');
+        const statMascotas = document.getElementById('statMascotas');
+        const statCitas = document.getElementById('statCitas');
+        const statServicios = document.getElementById('statServicios');
+        
+        if (statClientes) animateCounter(statClientes, clientes);
+        if (statMascotas) animateCounter(statMascotas, mascotas);
+        if (statCitas) animateCounter(statCitas, citas);
+        if (statServicios) animateCounter(statServicios, servicios);
+        
+        console.log(`📊 Estadísticas: ${clientes} clientes, ${mascotas} mascotas, ${citas} citas, ${servicios} servicios`);
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// ==========================================================================
+// 7. SCROLL SUAVE PARA ENLACES
+// ==========================================================================
+
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            e.preventDefault();
+            const offsetTop = target.getBoundingClientRect().top + window.pageYOffset - 80;
+            window.scrollTo({
+                top: offsetTop,
+                behavior: 'smooth'
+            });
+        }
+    });
+});
+
+// ==========================================================================
+// 8. SISTEMA DE TOAST/NOTIFICACIONES
+// ==========================================================================
+
+function showAlert(message, type = "info", duration = 3200) {
+    const container = document.querySelector('.toast-container') || createToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = { success: '✅', error: '❌', warning: '⚠️', info: '🔔' };
+    const titles = { success: 'Éxito', error: 'Error', warning: 'Advertencia', info: 'Información' };
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <div class="toast-content">
+            <div class="toast-title">${titles[type]}</div>
+            <div class="toast-message">${escapeHtml(message)}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+    `;
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    });
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+// ==========================================================================
+// 9. INICIALIZACIÓN
+// ==========================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTheme();
+    setTimeout(loadStats, 300);
+    
+    window.addEventListener('scroll', () => {
+        handleNavbarScroll();
+        handleBackToTop();
+    });
+    
+    console.log('✅ MaskoVet Landing Page (corregida) loaded successfully');
+});
+
+// ==========================================================================
+// 10. RECARGAR ESTADÍSTICAS CADA 30 SEGUNDOS
+// ==========================================================================
+
+setInterval(() => {
+    loadStats();
+}, 30000);
+</script>
+
+</body>
+</html>
