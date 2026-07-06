@@ -695,7 +695,7 @@ const EmpresaApp = {
                 <td><span class="status-badge ${estadoClass}">${escapeHtml(c.estado || 'Pendiente')}</span></td>
                 <td>
                     <div class="table-actions-cell">
-                        <button class="btn btn-sm btn-success" onclick="EmpresaApp.cambiarEstadoCita('${c.id}', 'Confirmada')">✅</button>
+                        <button class="btn btn-sm btn-success" onclick="EmpresaApp.cambiarEstadoCita('${c.id}', 'Aceptada')">✅</button>
                         <button class="btn btn-sm btn-primary" onclick="EmpresaApp.cambiarEstadoCita('${c.id}', 'En proceso')">⏳</button>
                         <button class="btn btn-sm btn-success" onclick="EmpresaApp.cambiarEstadoCita('${c.id}', 'Completada')">✔️</button>
                         <button class="btn btn-sm btn-danger" onclick="EmpresaApp.cambiarEstadoCita('${c.id}', 'Cancelada')">❌</button>
@@ -711,7 +711,7 @@ const EmpresaApp = {
         if (!cita) { showAlert('Cita no encontrada', 'error'); return; }
         await updateCita(id, { estado });
         const mensajes = {
-            'Confirmada': 'Tu cita ha sido confirmada ✅',
+            'Aceptada': 'Tu cita ha sido aceptada ✅',
             'En proceso': 'Tu cita está en proceso ⏳',
             'Completada': 'Tu cita ha sido completada ✔️',
             'Cancelada': 'Tu cita ha sido cancelada ❌'

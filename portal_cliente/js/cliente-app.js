@@ -190,14 +190,6 @@ function cargarEventos() {
         formMascota.addEventListener('submit', registrarMascotaDesdeFormulario);
     }
     
-    const formCita = document.getElementById('formCita');
-    if (formCita) {
-        formCita.addEventListener('submit', function(e) {
-            e.preventDefault();
-            reservarCitaDesdeFormulario();
-        });
-    }
-    
     const fileInput = document.getElementById('paymentFile');
     if (fileInput) {
         fileInput.addEventListener('change', manejarComprobante);
@@ -1264,14 +1256,14 @@ function renderTarjetaCita(c) {
     
     const estadoColors = {
         'Pendiente': 'pending',
-        'Confirmada': 'in-progress',
+        'Aceptada': 'in-progress',
         'En proceso': 'in-progress',
         'Completada': 'approved',
         'Cancelada': 'rejected'
     };
     
-    const puedeCancelar = estado === 'Pendiente' || estado === 'Confirmada';
-    const puedeReprogramar = estado === 'Pendiente' || estado === 'Confirmada';
+    const puedeCancelar = estado === 'Pendiente' || estado === 'Aceptada';
+    const puedeReprogramar = estado === 'Pendiente' || estado === 'Aceptada';
     
     return `
         <div class="cita-box">
