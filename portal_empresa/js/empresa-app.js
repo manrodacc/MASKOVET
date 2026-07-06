@@ -1030,10 +1030,13 @@ const EmpresaApp = {
         const tbody = document.getElementById('table-personal-body');
         if (!tbody) return;
         
-        // Mostrar todos los usuarios que no son clientes (empleados)
-        const empleados = DB.usuarios.filter(u => u.rol && u.rol.toLowerCase() !== 'cliente');
+        // Show only operational staff (veterinarians, receptionists, technicians)
+        const operarios = DB.usuarios.filter(u => {
+            const rol = (u.rol || '').toLowerCase();
+            return ['veterinario', 'recepcionista', 'tecnico'].includes(rol);
+        });
         
-        const todos = empleados.map(item => ({
+        const todos = operarios.map(item => ({
             ...item,
             tipo: item.rol.charAt(0).toUpperCase() + item.rol.slice(1),
             nombre: `${item.nombres || ''} ${item.apellidos || ''}`.trim()
@@ -1094,6 +1097,18 @@ const EmpresaApp = {
             showAlert('Ocurrió un error', 'error');
         } finally {
             if (btn) btn.disabled = false;
+        }
+    },
+
+    toggleEspecialidad(selectId, groupObjId) {
+        const rol = document.getElementById(selectId).value;
+        const group = document.getElementById(groupObjId);
+        if (!group) return;
+        
+        if (rol === 'veterinario' || rol === 'tecnico') {
+            group.style.display = 'block';
+        } else {
+            group.style.display = 'none';
         }
     },
 
