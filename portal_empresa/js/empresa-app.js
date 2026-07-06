@@ -1106,7 +1106,7 @@ const EmpresaApp = {
         document.getElementById('edit-personal-apellidos').value = item.apellidos || '';
         document.getElementById('edit-personal-correo').value = item.correo || '';
         document.getElementById('edit-personal-telefono').value = item.telefono || '';
-        document.getElementById('edit-personal-rol').value = item.rol || 'veterinario';
+        document.getElementById('edit-personal-rol').value = (item.rol || 'veterinario').toLowerCase();
         document.getElementById('edit-personal-especialidad').value = item.especialidad || '';
         document.getElementById('edit-personal-password').value = '';
         
