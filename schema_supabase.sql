@@ -125,9 +125,25 @@ DROP POLICY IF EXISTS "Permitir acceso publico productos" ON productos;
 DROP POLICY IF EXISTS "Permitir acceso publico citas" ON citas;
 DROP POLICY IF EXISTS "Permitir acceso publico historial" ON historial_clinico;
 
+-- 7. TABLA: notificaciones
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    cliente_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
+    titulo TEXT NOT NULL DEFAULT 'Notificación',
+    mensaje TEXT,
+    tipo TEXT DEFAULT 'info',
+    leida BOOLEAN DEFAULT false,
+    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
+);
+
+ALTER TABLE notificaciones ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir acceso publico notificaciones" ON notificaciones;
+CREATE POLICY "Permitir acceso publico notificaciones" ON notificaciones FOR ALL USING (true);
+
 CREATE POLICY "Permitir acceso publico usuarios" ON usuarios FOR ALL USING (true);
 CREATE POLICY "Permitir acceso publico mascotas" ON mascotas FOR ALL USING (true);
 CREATE POLICY "Permitir acceso publico servicios" ON servicios FOR ALL USING (true);
 CREATE POLICY "Permitir acceso publico productos" ON productos FOR ALL USING (true);
 CREATE POLICY "Permitir acceso publico citas" ON citas FOR ALL USING (true);
 CREATE POLICY "Permitir acceso publico historial" ON historial_clinico FOR ALL USING (true);
+

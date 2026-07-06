@@ -82,7 +82,7 @@ async function cargarDashboard() {
         renderProductos();
         renderCitas();
         renderDisponibilidadAgenda();
-        renderNotificaciones();
+        await renderNotificaciones();
         renderSelectorMascotas();
         renderSelectorServiciosCita();
         renderHistorialClinico();
@@ -91,12 +91,18 @@ async function cargarDashboard() {
         actualizarEstadisticas();
         mostrarBienvenida();
         cargarEventos();
+
+        // Poll notifications every 30 seconds so admin actions are reflected
+        setInterval(async () => {
+            if (cliente) await renderNotificaciones();
+        }, 30000);
         
     } catch (error) {
         console.error('Error loading dashboard:', error);
         showAlert('Error al cargar el dashboard', 'error');
     }
 }
+
 
 function actualizarInfoUsuario() {
     const nombreBox = document.getElementById('clienteNombre');
@@ -1722,11 +1728,21 @@ function renderTarjetaCompra(venta) {
 // 14. NOTIFICACIONES
 // ==========================================================================
 
-function renderNotificaciones() {
+async function renderNotificaciones() {
     const container = document.getElementById('notificacionesContainer');
     if (!container || !cliente) return;
-    
-    const notis = DB.notificaciones.filter(n => n.clienteId === cliente.id);
+
+    // Always fetch fresh from Supabase so admin notifications are visible
+    let notis = [];
+    try {
+        notis = await getNotificacionesSupabase(cliente.id);
+        // Update local cache
+        DB.notificaciones = notis;
+    } catch(e) {
+        // Fallback to local cache
+        notis = DB.notificaciones.filter(n => n.clienteId === cliente.id);
+    }
+
     if (!notis.length) {
         container.innerHTML = `
             <div style="text-align: center; padding: 20px;">
@@ -1734,19 +1750,25 @@ function renderNotificaciones() {
                 <p style="color: #64748b;">No tienes notificaciones</p>
             </div>
         `;
+        actualizarBadgesNotificaciones(0);
         return;
     }
     
-    notis.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    notis.sort((a, b) => new Date(b.fecha_creacion || b.fecha) - new Date(a.fecha_creacion || a.fecha));
     container.innerHTML = notis.map(n => renderTarjetaNotificacion(n)).join('');
     
     const noLeidas = notis.filter(n => !n.leida).length;
+    actualizarBadgesNotificaciones(noLeidas);
+}
+
+function actualizarBadgesNotificaciones(noLeidas) {
     const badge = document.getElementById('notificacionesBadge');
     if (badge) {
         badge.textContent = noLeidas;
         badge.style.display = noLeidas > 0 ? 'inline' : 'none';
     }
 }
+
 
 function renderTarjetaNotificacion(n) {
     const isUnread = !n.leida;
@@ -1765,16 +1787,17 @@ function renderTarjetaNotificacion(n) {
     `;
 }
 
-function marcarNotificacionLeida(id) {
+async function marcarNotificacionLeida(id) {
     const noti = DB.notificaciones.find(n => n.id === id);
     if (noti && !noti.leida) {
-        marcarNotificacionLeidaDB(id);
-        renderNotificaciones();
+        await marcarNotificacionLeidaSupabase(id);
+        await renderNotificaciones();
         actualizarEstadisticas();
     }
 }
 
-function marcarTodasNotificaciones() {
+
+async function marcarTodasNotificaciones() {
     if (!cliente) return;
     
     const noLeidas = DB.notificaciones.filter(n => n.clienteId === cliente.id && !n.leida);
@@ -1783,11 +1806,12 @@ function marcarTodasNotificaciones() {
         return;
     }
     
-    marcarTodasLeidas(cliente.id);
-    renderNotificaciones();
+    await marcarTodasLeidasSupabase(cliente.id);
+    await renderNotificaciones();
     actualizarEstadisticas();
     showAlert('Todas las notificaciones marcadas como leídas', 'success');
 }
+
 
 // ==========================================================================
 // 15. FUNCIONES DE UTILIDAD
@@ -1802,10 +1826,21 @@ function marcarNotificacionLeidaDB(id) {
 }
 
 function addNotificacion(notificacion) {
+    // Local fallback only — use the async version from db.js for cross-device notifications
     if (!DB.notificaciones) DB.notificaciones = [];
-    DB.notificaciones.push(notificacion);
-    saveDB();
+    const notif = {
+        id: notificacion.id || generateId('NOTI'),
+        clienteId: notificacion.clienteId || notificacion.usuarioId,
+        usuarioId: notificacion.clienteId || notificacion.usuarioId,
+        titulo: notificacion.titulo || 'Notificación',
+        mensaje: notificacion.mensaje || '',
+        leida: false,
+        fecha_creacion: new Date().toISOString()
+    };
+    DB.notificaciones.unshift(notif);
+    return notif;
 }
+
 
 // ==========================================================================
 // 16. EXPORTACIÓN GLOBAL

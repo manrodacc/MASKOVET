@@ -147,14 +147,15 @@ function verifyPassword(inputPassword, storedPassword) {
 async function initDB() {
     try {
         console.log('🔄 Sincronizando datos con Supabase...');
-        const [uRes, mRes, sRes, pRes, cRes, hRes, pagRes] = await Promise.all([
+        const [uRes, mRes, sRes, pRes, cRes, hRes, pagRes, notiRes] = await Promise.all([
             supabase.from('usuarios').select('*'),
             supabase.from('mascotas').select('*'),
             supabase.from('servicios').select('*'),
             supabase.from('productos').select('*'),
             supabase.from('citas').select('*'),
             supabase.from('historial_clinico').select('*'),
-            supabase.from('pagos').select('*')
+            supabase.from('pagos').select('*'),
+            supabase.from('notificaciones').select('*').order('fecha_creacion', { ascending: false })
         ]);
 
         if (uRes.data) DB.usuarios = uRes.data;
@@ -164,6 +165,7 @@ async function initDB() {
         if (cRes.data) DB.citas = cRes.data.map(c => ({...c, clienteId: c.cliente_id, mascotaId: c.mascota_id, veterinarioId: c.veterinario_id, servicioId: c.servicio_id, pagoId: c.pago_id}));
         if (hRes.data) DB.historialClinico = hRes.data.map(h => ({...h, clienteId: h.cliente_id, mascotaId: h.mascota_id, veterinarioId: h.veterinario_id}));
         if (pagRes.data) DB.pagos = pagRes.data.map(p => ({...p, clienteId: p.cliente_id, citaId: p.cita_id, ventaId: p.venta_id}));
+        if (notiRes.data) DB.notificaciones = notiRes.data.map(n => ({...n, clienteId: n.cliente_id, usuarioId: n.cliente_id, leida: n.leida || false}));
         
         console.log('✅ Base de datos local sincronizada.');
         return true;
@@ -172,6 +174,7 @@ async function initDB() {
         return false;
     }
 }
+
 
 function loadFromStorage() {
     // Deprecated for Supabase
@@ -946,21 +949,24 @@ function deleteVenta(id) {
 // 13. MÓDULO DE NOTIFICACIONES
 // ==========================================================================
 
-function addNotificacion(notificacion) {
+async function addNotificacion(notificacion) {
     try {
-        const notif = {
-            id: notificacion.id || generateId('NOT'),
-            usuarioId: notificacion.usuarioId,
-            clienteId: notificacion.clienteId || notificacion.usuarioId,
+        const clienteIdReal = notificacion.clienteId || notificacion.usuarioId;
+        const nueva = {
+            cliente_id: clienteIdReal,
             titulo: notificacion.titulo || 'Notificación',
             mensaje: notificacion.mensaje || '',
             tipo: notificacion.tipo || 'info',
-            leida: false,
-            fecha: notificacion.fecha || getCurrentDateTime()
+            leida: false
         };
 
-        DB.notificaciones.push(notif);
-        saveDB();
+        const { data, error } = await supabase.from('notificaciones').insert([nueva]).select();
+        if (error) {
+            console.error('Error adding notification to Supabase:', error);
+            return null;
+        }
+        const notif = { ...data[0], clienteId: data[0].cliente_id, usuarioId: data[0].cliente_id };
+        DB.notificaciones.unshift(notif);
         return notif;
     } catch (error) {
         console.error('Error adding notification:', error);
@@ -971,17 +977,31 @@ function addNotificacion(notificacion) {
 function getNotificaciones(usuarioId = null) {
     if (usuarioId) {
         return DB.notificaciones.filter(n => n.usuarioId === usuarioId || n.clienteId === usuarioId)
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            .sort((a, b) => new Date(b.fecha_creacion || b.fecha) - new Date(a.fecha_creacion || a.fecha));
     }
-    return DB.notificaciones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    return DB.notificaciones.sort((a, b) => new Date(b.fecha_creacion || b.fecha) - new Date(a.fecha_creacion || a.fecha));
 }
 
-function marcarNotificacionLeida(id) {
+async function getNotificacionesSupabase(clienteId) {
     try {
+        const { data, error } = await supabase
+            .from('notificaciones')
+            .select('*')
+            .eq('cliente_id', clienteId)
+            .order('fecha_creacion', { ascending: false });
+        if (error) return [];
+        return data.map(n => ({ ...n, clienteId: n.cliente_id, usuarioId: n.cliente_id }));
+    } catch (e) {
+        console.error('Error fetching notifications:', e);
+        return [];
+    }
+}
+
+async function marcarNotificacionLeidaSupabase(id) {
+    try {
+        await supabase.from('notificaciones').update({ leida: true }).eq('id', id);
         const idx = DB.notificaciones.findIndex(n => n.id === id);
-        if (idx === -1) return false;
-        DB.notificaciones[idx].leida = true;
-        saveDB();
+        if (idx !== -1) DB.notificaciones[idx].leida = true;
         return true;
     } catch (error) {
         console.error('Error marking notification as read:', error);
@@ -989,17 +1009,31 @@ function marcarNotificacionLeida(id) {
     }
 }
 
-function marcarTodasLeidas(usuarioId) {
+async function marcarTodasLeidasSupabase(clienteId) {
     try {
-        DB.notificaciones = DB.notificaciones.map(n => 
-            (n.usuarioId === usuarioId || n.clienteId === usuarioId) ? { ...n, leida: true } : n
+        await supabase.from('notificaciones').update({ leida: true }).eq('cliente_id', clienteId).eq('leida', false);
+        DB.notificaciones = DB.notificaciones.map(n =>
+            (n.clienteId === clienteId || n.cliente_id === clienteId) ? { ...n, leida: true } : n
         );
-        saveDB();
         return true;
     } catch (error) {
         console.error('Error marking all as read:', error);
         return false;
     }
+}
+
+function marcarNotificacionLeida(id) {
+    const idx = DB.notificaciones.findIndex(n => n.id === id);
+    if (idx !== -1) { DB.notificaciones[idx].leida = true; saveDB(); }
+    return true;
+}
+
+function marcarTodasLeidas(usuarioId) {
+    DB.notificaciones = DB.notificaciones.map(n =>
+        (n.usuarioId === usuarioId || n.clienteId === usuarioId) ? { ...n, leida: true } : n
+    );
+    saveDB();
+    return true;
 }
 
 // ==========================================================================
