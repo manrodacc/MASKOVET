@@ -1594,7 +1594,7 @@ function manejarComprobante(event) {
     reader.readAsDataURL(file);
 }
 
-function subirComprobante() {
+async function subirComprobante() {
     if (!cliente) {
         showAlert('Debes iniciar sesión para realizar un pedido', 'error');
         return;
@@ -1629,7 +1629,7 @@ function subirComprobante() {
         }))
     };
     
-    addVenta(venta);
+    await addVenta(venta);
     
     const pago = {
         id: generateId('PAG'),
@@ -1641,9 +1641,9 @@ function subirComprobante() {
         comprobante: comprobanteTemporal || '',
         fechaPago: getCurrentDateTime()
     };
-    addPago(pago);
+    await addPago(pago);
     
-    addNotificacion({
+    await addNotificacion({
         id: generateId('NOTI'),
         clienteId: cliente.id,
         titulo: 'Nuevo pedido',

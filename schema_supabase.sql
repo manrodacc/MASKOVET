@@ -137,9 +137,46 @@ CREATE TABLE IF NOT EXISTS notificaciones (
     fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
 );
 
+-- 8. TABLA: ventas
+CREATE TABLE IF NOT EXISTS ventas (
+    id TEXT PRIMARY KEY,
+    cliente_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
+    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+    total DECIMAL(10,2) NOT NULL DEFAULT 0,
+    estado TEXT DEFAULT 'Pendiente',
+    metodo_pago TEXT DEFAULT 'No especificado',
+    estado_pago TEXT DEFAULT 'Pendiente',
+    comprobante TEXT,
+    items JSONB DEFAULT '[]'::jsonb,
+    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    fecha_actualizacion TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
+);
+
+-- 9. TABLA: pagos
+CREATE TABLE IF NOT EXISTS pagos (
+    id TEXT PRIMARY KEY,
+    cliente_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
+    venta_id TEXT REFERENCES ventas(id) ON DELETE CASCADE,
+    cita_id UUID REFERENCES citas(id) ON DELETE SET NULL,
+    monto DECIMAL(10,2) NOT NULL DEFAULT 0,
+    metodo TEXT DEFAULT 'No especificado',
+    estado TEXT DEFAULT 'Pendiente',
+    comprobante TEXT,
+    observacion TEXT,
+    fecha_pago TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now())
+);
+
 ALTER TABLE notificaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ventas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pagos ENABLE ROW LEVEL SECURITY;
+
 DROP POLICY IF EXISTS "Permitir acceso publico notificaciones" ON notificaciones;
+DROP POLICY IF EXISTS "Permitir acceso publico ventas" ON ventas;
+DROP POLICY IF EXISTS "Permitir acceso publico pagos" ON pagos;
+
 CREATE POLICY "Permitir acceso publico notificaciones" ON notificaciones FOR ALL USING (true);
+CREATE POLICY "Permitir acceso publico ventas" ON ventas FOR ALL USING (true);
+CREATE POLICY "Permitir acceso publico pagos" ON pagos FOR ALL USING (true);
 
 CREATE POLICY "Permitir acceso publico usuarios" ON usuarios FOR ALL USING (true);
 CREATE POLICY "Permitir acceso publico mascotas" ON mascotas FOR ALL USING (true);

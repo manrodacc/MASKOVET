@@ -147,7 +147,7 @@ function verifyPassword(inputPassword, storedPassword) {
 async function initDB() {
     try {
         console.log('🔄 Sincronizando datos con Supabase...');
-        const [uRes, mRes, sRes, pRes, cRes, hRes, pagRes, notiRes] = await Promise.all([
+        const [uRes, mRes, sRes, pRes, cRes, hRes, pagRes, notiRes, venRes] = await Promise.all([
             supabase.from('usuarios').select('*'),
             supabase.from('mascotas').select('*'),
             supabase.from('servicios').select('*'),
@@ -155,7 +155,8 @@ async function initDB() {
             supabase.from('citas').select('*'),
             supabase.from('historial_clinico').select('*'),
             supabase.from('pagos').select('*'),
-            supabase.from('notificaciones').select('*').order('fecha_creacion', { ascending: false })
+            supabase.from('notificaciones').select('*').order('fecha_creacion', { ascending: false }),
+            supabase.from('ventas').select('*')
         ]);
 
         if (uRes.data) DB.usuarios = uRes.data;
@@ -165,6 +166,7 @@ async function initDB() {
         if (cRes.data) DB.citas = cRes.data.map(c => ({...c, clienteId: c.cliente_id, mascotaId: c.mascota_id, veterinarioId: c.veterinario_id, servicioId: c.servicio_id, pagoId: c.pago_id}));
         if (hRes.data) DB.historialClinico = hRes.data.map(h => ({...h, clienteId: h.cliente_id, mascotaId: h.mascota_id, veterinarioId: h.veterinario_id}));
         if (pagRes.data) DB.pagos = pagRes.data.map(p => ({...p, clienteId: p.cliente_id, citaId: p.cita_id, ventaId: p.venta_id}));
+        if (venRes && venRes.data) DB.ventas = venRes.data.map(v => ({...v, clienteId: v.cliente_id, metodoPago: v.metodo_pago, estadoPago: v.estado_pago}));
         if (notiRes.data) DB.notificaciones = notiRes.data.map(n => ({...n, clienteId: n.cliente_id, usuarioId: n.cliente_id, leida: n.leida || false}));
         
         // Populate personnel from usuarios table
@@ -824,36 +826,6 @@ async function deleteHistorialClinico(id) {
 // 11. MÓDULO DE PAGOS
 // ==========================================================================
 
-function addPago(pago) {
-    try {
-        if (!pago.clienteId || !pago.monto) return null;
-
-        const nuevo = {
-            id: pago.id || generateId('PAG'),
-            clienteId: pago.clienteId,
-            citaId: pago.citaId || null,
-            ventaId: pago.ventaId || null,
-            monto: Number(pago.monto),
-            metodo: pago.metodo || 'Efectivo',
-            estado: pago.estado || 'Pendiente',
-            comprobante: pago.comprobante || null,
-            observacion: pago.observacion || '',
-            fechaPago: pago.fechaPago || getCurrentDateTime(),
-            fechaCreacion: getCurrentDateTime(),
-            fechaActualizacion: getCurrentDateTime()
-        };
-
-        if (DB.pagos.some(p => p.id === nuevo.id)) return null;
-
-        DB.pagos.push(nuevo);
-        saveDB();
-        return nuevo;
-    } catch (error) {
-        console.error('Error adding payment:', error);
-        return null;
-    }
-}
-
 function getPagos(clienteId = null) {
     if (clienteId) {
         return DB.pagos.filter(p => p.clienteId === clienteId);
@@ -861,21 +833,75 @@ function getPagos(clienteId = null) {
     return DB.pagos;
 }
 
+async function addPago(pago) {
+    try {
+        if (!pago.clienteId || !pago.monto) return null;
+        const nuevo = {
+            id: pago.id || generateId('PAG'),
+            cliente_id: pago.clienteId,
+            venta_id: pago.ventaId || null,
+            cita_id: pago.citaId || null,
+            monto: Number(pago.monto),
+            metodo: pago.metodo || 'No especificado',
+            estado: pago.estado || 'Pendiente',
+            comprobante: pago.comprobante || null,
+            observacion: pago.observacion || null
+        };
+        const { data, error } = await supabase.from('pagos').insert([nuevo]).select();
+        if (error) {
+            console.error('Error insertando pago en Supabase:', error);
+            return null;
+        }
+        const p = data[0];
+        const pagoGuardado = {...p, clienteId: p.cliente_id, citaId: p.cita_id, ventaId: p.venta_id};
+        DB.pagos.push(pagoGuardado);
+        return pagoGuardado;
+    } catch (error) {
+        console.error('Error adding payment:', error);
+        return null;
+    }
+}
+
 function getPago(id) {
     return DB.pagos.find(p => p.id === id) || null;
 }
 
-function updatePago(id, updates) {
+async function updatePago(id, updates) {
     try {
-        const idx = DB.pagos.findIndex(p => p.id === id);
-        if (idx === -1) return false;
+        const updateData = { ...updates };
+        if (updateData.clienteId) updateData.cliente_id = updateData.clienteId;
+        if (updateData.ventaId) updateData.venta_id = updateData.ventaId;
+        if (updateData.citaId) updateData.cita_id = updateData.citaId;
+        
+        delete updateData.clienteId;
+        delete updateData.ventaId;
+        delete updateData.citaId;
 
-        updates.fechaActualizacion = getCurrentDateTime();
-        DB.pagos[idx] = { ...DB.pagos[idx], ...updates };
-        saveDB();
+        const { error } = await supabase.from('pagos').update(updateData).eq('id', id);
+        if (error) {
+            console.error('Error updating payment in Supabase:', error);
+            return false;
+        }
+        
+        const idx = DB.pagos.findIndex(p => p.id === id);
+        if (idx !== -1) {
+            DB.pagos[idx] = { ...DB.pagos[idx], ...updates };
+        }
         return true;
     } catch (error) {
         console.error('Error updating payment:', error);
+        return false;
+    }
+}
+
+async function deletePago(id) {
+    try {
+        const { error } = await supabase.from('pagos').delete().eq('id', id);
+        if (error) return false;
+        DB.pagos = DB.pagos.filter(p => p.id !== id);
+        return true;
+    } catch (error) {
+        console.error('Error deleting payment:', error);
         return false;
     }
 }
@@ -884,29 +910,30 @@ function updatePago(id, updates) {
 // 12. MÓDULO DE VENTAS
 // ==========================================================================
 
-function addVenta(venta) {
+async function addVenta(venta) {
     try {
         if (!venta.clienteId || !venta.total) return null;
-
+        
         const nueva = {
             id: venta.id || generateId('VENTA'),
-            clienteId: venta.clienteId,
+            cliente_id: venta.clienteId,
             fecha: venta.fecha || getCurrentDate(),
             total: Number(venta.total),
             estado: venta.estado || 'Pendiente',
-            metodoPago: venta.metodoPago || 'No especificado',
-            estadoPago: venta.estadoPago || 'Pendiente',
+            metodo_pago: venta.metodoPago || 'No especificado',
+            estado_pago: venta.estadoPago || 'Pendiente',
             comprobante: venta.comprobante || null,
-            items: venta.items || [],
-            fechaCreacion: getCurrentDateTime(),
-            fechaActualizacion: getCurrentDateTime()
+            items: venta.items || []
         };
-
-        if (DB.ventas.some(v => v.id === nueva.id)) return null;
-
-        DB.ventas.push(nueva);
-        saveDB();
-        return nueva;
+        const { data, error } = await supabase.from('ventas').insert([nueva]).select();
+        if (error) {
+            console.error('Error insertando venta en Supabase:', error);
+            return null;
+        }
+        const v = data[0];
+        const ventaGuardada = {...v, clienteId: v.cliente_id, metodoPago: v.metodo_pago, estadoPago: v.estado_pago};
+        DB.ventas.push(ventaGuardada);
+        return ventaGuardada;
     } catch (error) {
         console.error('Error adding sale:', error);
         return null;
@@ -924,14 +951,28 @@ function getVenta(id) {
     return DB.ventas.find(v => v.id === id) || null;
 }
 
-function updateVenta(id, updates) {
+async function updateVenta(id, updates) {
     try {
-        const idx = DB.ventas.findIndex(v => v.id === id);
-        if (idx === -1) return false;
+        const updateData = { ...updates };
+        if (updateData.clienteId) updateData.cliente_id = updateData.clienteId;
+        if (updateData.metodoPago) updateData.metodo_pago = updateData.metodoPago;
+        if (updateData.estadoPago) updateData.estado_pago = updateData.estadoPago;
+        
+        delete updateData.clienteId;
+        delete updateData.metodoPago;
+        delete updateData.estadoPago;
+        updateData.fecha_actualizacion = new Date().toISOString();
 
-        updates.fechaActualizacion = getCurrentDateTime();
-        DB.ventas[idx] = { ...DB.ventas[idx], ...updates };
-        saveDB();
+        const { error } = await supabase.from('ventas').update(updateData).eq('id', id);
+        if (error) {
+            console.error('Error updating sale in Supabase:', error);
+            return false;
+        }
+
+        const idx = DB.ventas.findIndex(v => v.id === id);
+        if (idx !== -1) {
+            DB.ventas[idx] = { ...DB.ventas[idx], ...updates };
+        }
         return true;
     } catch (error) {
         console.error('Error updating sale:', error);
@@ -939,10 +980,11 @@ function updateVenta(id, updates) {
     }
 }
 
-function deleteVenta(id) {
+async function deleteVenta(id) {
     try {
+        const { error } = await supabase.from('ventas').delete().eq('id', id);
+        if (error) return false;
         DB.ventas = DB.ventas.filter(v => v.id !== id);
-        saveDB();
         return true;
     } catch (error) {
         console.error('Error deleting sale:', error);

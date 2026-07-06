@@ -947,9 +947,9 @@ const EmpresaApp = {
         await updatePago(id, { estado: 'Aprobado' });
         if (pago.ventaId && DB.ventas) {
             const venta = DB.ventas.find(v => v.id === pago.ventaId);
-            if (venta) updateVenta(pago.ventaId, { estado: 'Completada', estadoPago: 'Aprobado' });
+            if (venta) await updateVenta(pago.ventaId, { estado: 'Completada', estadoPago: 'Aprobado' });
         }
-        addNotificacion({ 
+        await addNotificacion({ 
             id: generateId('NOTI'), 
             usuarioId: pago.clienteId,
             titulo: 'Pago aprobado ✅',
@@ -968,8 +968,8 @@ const EmpresaApp = {
         if (!confirm('¿Estás seguro de rechazar este pago?')) return;
         const motivo = prompt('Motivo del rechazo (opcional):', '');
         await updatePago(id, { estado: 'Rechazado', observacion: motivo || '' });
-        if (pago.ventaId && DB.ventas) updateVenta(pago.ventaId, { estado: 'Rechazada', estadoPago: 'Rechazado' });
-        addNotificacion({ 
+        if (pago.ventaId && DB.ventas) await updateVenta(pago.ventaId, { estado: 'Rechazada', estadoPago: 'Rechazado' });
+        await addNotificacion({ 
             id: generateId('NOTI'), 
             usuarioId: pago.clienteId,
             titulo: 'Pago rechazado ❌',
