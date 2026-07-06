@@ -716,9 +716,11 @@ const EmpresaApp = {
             'Completada': 'Tu cita ha sido completada ✔️',
             'Cancelada': 'Tu cita ha sido cancelada ❌'
         };
-        addNotificacion({ 
+        const clienteId = cita.clienteId || cita.cliente_id;
+        await addNotificacion({ 
             id: generateId('NOTI'), 
-            usuarioId: cita.clienteId, 
+            usuarioId: clienteId, 
+            clienteId: clienteId,
             titulo: 'Actualización de cita',
             mensaje: mensajes[estado] || `Tu cita está ahora: ${estado}`,
             fecha: getCurrentDateTime() 
@@ -746,9 +748,11 @@ const EmpresaApp = {
         );
         if (ocupado) { showAlert('El horario seleccionado ya está ocupado', 'error'); return; }
         await updateCita(id, { fecha: nuevaFecha, hora: nuevaHora, estado: 'Pendiente' });
-        addNotificacion({ 
+        const clienteId = cita.clienteId || cita.cliente_id;
+        await addNotificacion({ 
             id: generateId('NOTI'), 
-            usuarioId: cita.clienteId,
+            usuarioId: clienteId,
+            clienteId: clienteId,
             titulo: 'Cita reprogramada',
             mensaje: `Tu cita ha sido reprogramada para el ${nuevaFecha} a las ${nuevaHora}`,
             fecha: getCurrentDateTime() 

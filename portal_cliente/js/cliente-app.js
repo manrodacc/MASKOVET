@@ -1343,7 +1343,7 @@ async function renderDisponibilidadAgenda() {
         const disponible = horarios.includes(hora);
         const isSelected = horaInput && horaInput.value === hora;
         return `
-            <button class="agenda-slot ${disponible ? (isSelected ? 'selected' : 'available') : 'blocked'}" 
+            <button type="button" class="agenda-slot ${disponible ? (isSelected ? 'selected' : 'available') : 'blocked'}" 
                     ${disponible ? `onclick="seleccionarHorario('${hora}')"` : 'disabled'}>
                 ${hora}
                 ${isSelected ? ' ✓' : ''}
@@ -1732,22 +1732,24 @@ async function renderNotificaciones() {
     const container = document.getElementById('notificacionesContainer');
     if (!container || !cliente) return;
 
-    // Always fetch fresh from Supabase so admin notifications are visible
+    // Fetch fresh from Supabase so admin notifications reach the client
     let notis = [];
     try {
-        notis = await getNotificacionesSupabase(cliente.id);
-        // Update local cache
+        // cliente.id is the UUID from Supabase
+        const clienteId = cliente.id;
+        notis = await getNotificacionesSupabase(clienteId);
         DB.notificaciones = notis;
+        console.log(`🔔 Notificaciones cargadas: ${notis.length} para cliente ${clienteId}`);
     } catch(e) {
-        // Fallback to local cache
-        notis = DB.notificaciones.filter(n => n.clienteId === cliente.id);
+        console.error('Error cargando notificaciones:', e);
+        notis = DB.notificaciones.filter(n => n.clienteId === cliente.id || n.cliente_id === cliente.id);
     }
 
     if (!notis.length) {
         container.innerHTML = `
             <div style="text-align: center; padding: 20px;">
                 <span style="font-size: 2rem;">🔔</span>
-                <p style="color: #64748b;">No tienes notificaciones</p>
+                <p style="color: #64748b;">No tienes notificaciones aún</p>
             </div>
         `;
         actualizarBadgesNotificaciones(0);
