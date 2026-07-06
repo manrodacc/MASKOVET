@@ -305,7 +305,7 @@ const EmpresaApp = {
 
     crearCliente() { this.abrirModal('modal-cliente'); },
 
-    guardarCliente(e) {
+    async guardarCliente(e) {
         e.preventDefault();
         const nombres = document.getElementById('cliente-nombres').value.trim();
         const apellidos = document.getElementById('cliente-apellidos').value.trim();
@@ -350,7 +350,7 @@ const EmpresaApp = {
         document.getElementById('edit-cliente-telefono').value = cliente.telefono || '';
     },
 
-    guardarEdicionCliente(e) {
+    async guardarEdicionCliente(e) {
         e.preventDefault();
         const id = document.getElementById('edit-cliente-id').value;
         const nombres = document.getElementById('edit-cliente-nombres').value.trim();
@@ -441,7 +441,7 @@ const EmpresaApp = {
         `, 'info', 8000);
     },
 
-    eliminarMascotaAdmin(id) {
+    async eliminarMascotaAdmin(id) {
         if (!confirm('¿Estás seguro de eliminar esta mascota?')) return;
         const citasActivas = DB.citas.some(c => c.mascotaId === id && c.estado !== 'Cancelada' && c.estado !== 'Completada');
         if (citasActivas) {
@@ -485,7 +485,7 @@ const EmpresaApp = {
         `;
     },
 
-    guardarServicio(e) {
+    async guardarServicio(e) {
         e.preventDefault();
         const nombre = document.getElementById('srv-nombre').value.trim();
         const precio = Number(document.getElementById('srv-costo').value);
@@ -513,7 +513,7 @@ const EmpresaApp = {
         document.getElementById('edit-srv-categoria').value = servicio.categoria || 'General';
     },
 
-    guardarEdicionServicio(e) {
+    async guardarEdicionServicio(e) {
         e.preventDefault();
         const id = document.getElementById('edit-srv-id').value;
         const nombre = document.getElementById('edit-srv-nombre').value.trim();
@@ -583,7 +583,7 @@ const EmpresaApp = {
         `;
     },
 
-    guardarProducto(e) {
+    async guardarProducto(e) {
         e.preventDefault();
         const nombre = document.getElementById('prod-nombre').value.trim();
         const categoria = document.getElementById('prod-categoria').value;
@@ -617,7 +617,7 @@ const EmpresaApp = {
         document.getElementById('edit-prod-descripcion').value = producto.descripcion || '';
     },
 
-    guardarEdicionProducto(e) {
+    async guardarEdicionProducto(e) {
         e.preventDefault();
         const id = document.getElementById('edit-prod-id').value;
         const nombre = document.getElementById('edit-prod-nombre').value.trim();
@@ -728,7 +728,7 @@ const EmpresaApp = {
         showAlert(`Cita marcada como ${estado}`, 'success');
     },
 
-    reprogramarCita(id) {
+    async reprogramarCita(id) {
         const cita = DB.citas.find(item => item.id === id);
         if (!cita) return;
         const nuevaFecha = prompt('Nueva fecha (YYYY-MM-DD):', cita.fecha || '');
@@ -810,7 +810,7 @@ const EmpresaApp = {
         `;
     },
 
-    guardarRegistroClinico() {
+    async guardarRegistroClinico() {
         const mascotaId = document.getElementById('clinicaMascota')?.value || '';
         const veterinarioId = document.getElementById('clinicaVeterinario')?.value || '';
         const fecha = document.getElementById('clinicaFecha')?.value || getCurrentDate();
