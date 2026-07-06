@@ -167,6 +167,11 @@ async function initDB() {
         if (pagRes.data) DB.pagos = pagRes.data.map(p => ({...p, clienteId: p.cliente_id, citaId: p.cita_id, ventaId: p.venta_id}));
         if (notiRes.data) DB.notificaciones = notiRes.data.map(n => ({...n, clienteId: n.cliente_id, usuarioId: n.cliente_id, leida: n.leida || false}));
         
+        // Populate personnel from usuarios table
+        DB.veterinarios = DB.usuarios.filter(u => (u.rol || '').toLowerCase() === 'veterinario').map(u => ({...u, nombre: `${u.nombres} ${u.apellidos}`}));
+        DB.recepcionistas = DB.usuarios.filter(u => (u.rol || '').toLowerCase() === 'recepcionista').map(u => ({...u, nombre: `${u.nombres} ${u.apellidos}`}));
+        DB.tecnicos = DB.usuarios.filter(u => (u.rol || '').toLowerCase() === 'tecnico').map(u => ({...u, nombre: `${u.nombres} ${u.apellidos}`}));
+
         console.log('✅ Base de datos local sincronizada.');
         return true;
     } catch (e) {
@@ -1037,51 +1042,54 @@ function marcarTodasLeidas(usuarioId) {
 }
 
 // ==========================================================================
-// 14. MÓDULO DE PERSONAL
+// 14. MÓDULO DE PERSONAL (SUPABASE)
 // ==========================================================================
 
-function addVeterinario(veterinario) {
+async function guardarPersonalSupabase(personal) {
     try {
-        if (!veterinario.id) veterinario.id = generateId('VET');
-        if (!DB.veterinarios.some(v => v.id === veterinario.id)) {
-            DB.veterinarios.push(veterinario);
-            saveDB();
-            return veterinario;
+        if (!personal.id) {
+            // New user insertion
+            const { data, error } = await supabase.from('usuarios').insert([{
+                nombres: personal.nombres,
+                apellidos: personal.apellidos,
+                correo: personal.correo,
+                password: encryptPassword(personal.password),
+                telefono: personal.telefono || null,
+                rol: personal.rol.toLowerCase(),
+                especialidad: personal.especialidad || null,
+                estado: 'Activo'
+            }]).select();
+            if (error) { console.error('Error insertando personal:', error); return { success: false, error: error.message }; }
+            return { success: true, data: data[0] };
+        } else {
+            // Updating existing user
+            const updateData = {
+                nombres: personal.nombres,
+                apellidos: personal.apellidos,
+                correo: personal.correo,
+                telefono: personal.telefono || null,
+                rol: personal.rol.toLowerCase(),
+                especialidad: personal.especialidad || null
+            };
+            if (personal.password) updateData.password = encryptPassword(personal.password);
+            
+            const { data, error } = await supabase.from('usuarios').update(updateData).eq('id', personal.id).select();
+            if (error) { console.error('Error actualizando personal:', error); return { success: false, error: error.message }; }
+            return { success: true, data: data[0] };
         }
-        return null;
-    } catch (error) {
-        console.error('Error adding veterinarian:', error);
-        return null;
+    } catch (e) {
+        console.error('Error exception saving personnel:', e);
+        return { success: false, error: e.message };
     }
 }
 
-function addRecepcionista(recepcionista) {
+async function eliminarPersonalSupabase(id) {
     try {
-        if (!recepcionista.id) recepcionista.id = generateId('REC');
-        if (!DB.recepcionistas.some(r => r.id === recepcionista.id)) {
-            DB.recepcionistas.push(recepcionista);
-            saveDB();
-            return recepcionista;
-        }
-        return null;
-    } catch (error) {
-        console.error('Error adding receptionist:', error);
-        return null;
-    }
-}
-
-function addTecnico(tecnico) {
-    try {
-        if (!tecnico.id) tecnico.id = generateId('TEC');
-        if (!DB.tecnicos.some(t => t.id === tecnico.id)) {
-            DB.tecnicos.push(tecnico);
-            saveDB();
-            return tecnico;
-        }
-        return null;
-    } catch (error) {
-        console.error('Error adding technician:', error);
-        return null;
+        const { error } = await supabase.from('usuarios').delete().eq('id', id);
+        if (error) return { success: false, error: error.message };
+        return { success: true };
+    } catch (e) {
+        return { success: false, error: e.message };
     }
 }
 

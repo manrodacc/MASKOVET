@@ -197,7 +197,7 @@
 
         <section id="section-personal" class="admin-section">
             <div class="admin-table-box">
-                <div class="table-header"><h3>👩‍⚕️ Personal Operativo</h3><div class="table-actions"><button class="btn btn-primary btn-sm" onclick="EmpresaApp.crearVeterinario()">+ Veterinario</button><button class="btn btn-secondary btn-sm" onclick="EmpresaApp.crearRecepcionista()">+ Recepcionista</button><button class="btn btn-outline btn-sm" onclick="EmpresaApp.crearTecnico()">+ Técnico</button></div></div>
+                <div class="table-header"><h3>👩‍⚕️ Personal Operativo</h3><div class="table-actions"><button class="btn btn-primary btn-sm" onclick="EmpresaApp.abrirModal('modal-personal')">+ Nuevo Personal</button></div></div>
                 <div class="table-wrapper"><table class="excel-table"><thead><tr><th>Tipo</th><th>Nombre</th><th>Especialidad</th><th>Contacto</th><th>Acciones</th></tr></thead><tbody id="table-personal-body"></tbody></table></div>
             </div>
         </section>
@@ -335,6 +335,39 @@
             <div class="form-admin-group"><label>Correo <span class="required">*</span></label><input type="email" id="edit-cliente-correo" class="form-admin-input" required></div>
             <div class="form-admin-group"><label>Teléfono <span class="required">*</span></label><input type="tel" id="edit-cliente-telefono" class="form-admin-input" required></div>
             <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-cliente-edit')">Cancelar</button><button type="submit" class="btn btn-primary">Actualizar Cliente</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-personal" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>👩‍⚕️ Nuevo Personal</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-personal')">✕</button></div>
+        <form id="form-personal" onsubmit="EmpresaApp.guardarPersonal(event)">
+            <div class="form-admin-group"><label>Nombres <span class="required">*</span></label><input type="text" id="personal-nombres" class="form-admin-input" placeholder="Juan" required></div>
+            <div class="form-admin-group"><label>Apellidos <span class="required">*</span></label><input type="text" id="personal-apellidos" class="form-admin-input" placeholder="Pérez" required></div>
+            <div class="form-admin-group"><label>Correo <span class="required">*</span></label><input type="email" id="personal-correo" class="form-admin-input" placeholder="correo@ejemplo.com" required></div>
+            <div class="form-admin-group"><label>Teléfono</label><input type="tel" id="personal-telefono" class="form-admin-input" placeholder="987654321"></div>
+            <div class="form-admin-group"><label>Contraseña <span class="required">*</span></label><input type="password" id="personal-password" class="form-admin-input" placeholder="••••••••" minlength="6" required></div>
+            <div class="form-admin-group"><label>Rol <span class="required">*</span></label><select id="personal-rol" class="form-admin-input" required onchange="EmpresaApp.toggleEspecialidad('personal-rol', 'personal-especialidad-group')"><option value="veterinario">Veterinario</option><option value="recepcionista">Recepcionista</option><option value="tecnico">Técnico</option></select></div>
+            <div class="form-admin-group" id="personal-especialidad-group"><label>Especialidad</label><input type="text" id="personal-especialidad" class="form-admin-input" placeholder="Ej: Medicina General"></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-personal')">Cancelar</button><button type="submit" class="btn btn-primary" id="btn-guardar-personal">Registrar Personal</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-personal-edit" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header"><h2>✏️ Editar Personal</h2><button class="modal-close" onclick="EmpresaApp.cerrarModal('modal-personal-edit')">✕</button></div>
+        <form id="form-editar-personal" onsubmit="EmpresaApp.guardarEdicionPersonal(event)">
+            <input type="hidden" id="edit-personal-id">
+            <div class="form-admin-group"><label>Nombres <span class="required">*</span></label><input type="text" id="edit-personal-nombres" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Apellidos <span class="required">*</span></label><input type="text" id="edit-personal-apellidos" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Correo <span class="required">*</span></label><input type="email" id="edit-personal-correo" class="form-admin-input" required></div>
+            <div class="form-admin-group"><label>Teléfono</label><input type="tel" id="edit-personal-telefono" class="form-admin-input"></div>
+            <div class="form-admin-group"><label>Nueva Contraseña (Opcional)</label><input type="password" id="edit-personal-password" class="form-admin-input" placeholder="Dejar en blanco para mantener la actual" minlength="6"></div>
+            <div class="form-admin-group"><label>Rol <span class="required">*</span></label><select id="edit-personal-rol" class="form-admin-input" required onchange="EmpresaApp.toggleEspecialidad('edit-personal-rol', 'edit-personal-especialidad-group')"><option value="veterinario">Veterinario</option><option value="recepcionista">Recepcionista</option><option value="tecnico">Técnico</option></select></div>
+            <div class="form-admin-group" id="edit-personal-especialidad-group"><label>Especialidad</label><input type="text" id="edit-personal-especialidad" class="form-admin-input"></div>
+            <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="EmpresaApp.cerrarModal('modal-personal-edit')">Cancelar</button><button type="submit" class="btn btn-primary" id="btn-actualizar-personal">Actualizar Personal</button></div>
         </form>
     </div>
 </div>

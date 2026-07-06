@@ -1029,11 +1029,16 @@ const EmpresaApp = {
     renderizarPersonal() {
         const tbody = document.getElementById('table-personal-body');
         if (!tbody) return;
-        const todos = [
-            ...DB.veterinarios.map(item => ({ tipo: 'Veterinario', ...item })),
-            ...DB.recepcionistas.map(item => ({ tipo: 'Recepcionista', ...item })),
-            ...DB.tecnicos.map(item => ({ tipo: 'Técnico', ...item }))
-        ];
+        
+        // Mostrar todos los usuarios que no son clientes (empleados)
+        const empleados = DB.usuarios.filter(u => u.rol && u.rol.toLowerCase() !== 'cliente');
+        
+        const todos = empleados.map(item => ({
+            ...item,
+            tipo: item.rol.charAt(0).toUpperCase() + item.rol.slice(1),
+            nombre: `${item.nombres || ''} ${item.apellidos || ''}`.trim()
+        }));
+        
         tbody.innerHTML = todos.map(item => this.renderFilaPersonal(item)).join('');
     },
 
@@ -1041,12 +1046,12 @@ const EmpresaApp = {
         return `
             <tr>
                 <td><span class="status-badge status-en-progreso">${escapeHtml(item.tipo)}</span></td>
-                <td><strong>${escapeHtml(item.nombre)}</strong></td>
+                <td><strong>${escapeHtml(item.nombre)}</strong><br><small style="color:#64748b;">${escapeHtml(item.correo || '')}</small></td>
                 <td>${escapeHtml(item.especialidad || '-')}</td>
                 <td>${escapeHtml(item.telefono || '-')}</td>
                 <td>
                     <div class="table-actions-cell">
-                        <button class="btn btn-sm btn-outline" onclick="EmpresaApp.editarPersonal('${item.id}', '${item.tipo}')">✏️</button>
+                        <button class="btn btn-sm btn-outline" onclick="EmpresaApp.editarPersonal('${item.id}')">✏️</button>
                         <button class="btn btn-sm btn-danger" onclick="EmpresaApp.eliminarPersonal('${item.id}', '${item.tipo}')">🗑️</button>
                     </div>
                 </td>
@@ -1054,59 +1059,119 @@ const EmpresaApp = {
         `;
     },
 
-    crearVeterinario() {
-        const nombre = prompt('Nombre del veterinario:', ''); if (!nombre) return;
-        const especialidad = prompt('Especialidad:', 'Medicina General') || 'Medicina General';
-        const telefono = prompt('Teléfono:', '') || '';
-        addVeterinario({ id: generateId('VET'), nombre: nombre.trim(), especialidad: especialidad.trim(), telefono: telefono.trim() });
-        this.renderizarPersonal(); this.renderizarClinica(); this.renderizarDashboard();
-        showAlert('Veterinario registrado ✅', 'success');
-    },
+    async guardarPersonal(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-guardar-personal');
+        if (btn) btn.disabled = true;
 
-    crearRecepcionista() {
-        const nombre = prompt('Nombre de recepcionista:', ''); if (!nombre) return;
-        const telefono = prompt('Teléfono:', '') || '';
-        addRecepcionista({ id: generateId('REC'), nombre: nombre.trim(), telefono: telefono.trim() });
-        this.renderizarPersonal(); this.renderizarDashboard();
-        showAlert('Recepcionista registrada ✅', 'success');
-    },
+        const rol = document.getElementById('personal-rol').value;
+        const personal = {
+            nombres: document.getElementById('personal-nombres').value.trim(),
+            apellidos: document.getElementById('personal-apellidos').value.trim(),
+            correo: document.getElementById('personal-correo').value.trim(),
+            password: document.getElementById('personal-password').value,
+            telefono: document.getElementById('personal-telefono').value.trim(),
+            rol: rol,
+            especialidad: (rol === 'veterinario' || rol === 'tecnico') ? document.getElementById('personal-especialidad').value.trim() : null
+        };
 
-    crearTecnico() {
-        const nombre = prompt('Nombre del técnico:', ''); if (!nombre) return;
-        const especialidad = prompt('Especialidad:', 'Grooming') || 'Grooming';
-        addTecnico({ id: generateId('TEC'), nombre: nombre.trim(), especialidad: especialidad.trim() });
-        this.renderizarPersonal(); this.renderizarDashboard();
-        showAlert('Técnico registrado ✅', 'success');
-    },
-
-    editarPersonal(id, tipo) {
-        let item, updateFn;
-        if (tipo === 'Veterinario') {
-            item = DB.veterinarios.find(v => v.id === id);
-            updateFn = (data) => { const idx = DB.veterinarios.findIndex(v => v.id === id); if (idx !== -1) DB.veterinarios[idx] = { ...DB.veterinarios[idx], ...data }; saveDB(); };
-        } else if (tipo === 'Recepcionista') {
-            item = DB.recepcionistas.find(r => r.id === id);
-            updateFn = (data) => { const idx = DB.recepcionistas.findIndex(r => r.id === id); if (idx !== -1) DB.recepcionistas[idx] = { ...DB.recepcionistas[idx], ...data }; saveDB(); };
-        } else {
-            item = DB.tecnicos.find(t => t.id === id);
-            updateFn = (data) => { const idx = DB.tecnicos.findIndex(t => t.id === id); if (idx !== -1) DB.tecnicos[idx] = { ...DB.tecnicos[idx], ...data }; saveDB(); };
+        try {
+            const res = await guardarPersonalSupabase(personal);
+            if (!res.success) {
+                showAlert(res.error || 'Error al guardar personal', 'error');
+                return;
+            }
+            
+            // Reload from Supabase
+            await initDB();
+            this.renderizarPersonal();
+            this.renderizarClinica();
+            
+            this.cerrarModal('modal-personal');
+            event.target.reset();
+            showAlert('Personal registrado correctamente', 'success');
+        } catch (e) {
+            showAlert('Ocurrió un error', 'error');
+        } finally {
+            if (btn) btn.disabled = false;
         }
-        if (!item) return;
-        const nombre = prompt('Nombre:', item.nombre || ''); if (nombre === null) return;
-        const especialidad = prompt('Especialidad:', item.especialidad || ''); if (especialidad === null) return;
-        const telefono = prompt('Teléfono:', item.telefono || ''); if (telefono === null) return;
-        updateFn({ nombre: nombre.trim(), especialidad: especialidad.trim(), telefono: telefono.trim() });
-        this.renderizarPersonal(); showAlert('Personal actualizado', 'success');
     },
 
-    eliminarPersonal(id, tipo) {
-        if (!confirm(`¿Eliminar este ${tipo}?`)) return;
-        if (tipo === 'Veterinario') DB.veterinarios = DB.veterinarios.filter(v => v.id !== id);
-        else if (tipo === 'Recepcionista') DB.recepcionistas = DB.recepcionistas.filter(r => r.id !== id);
-        else DB.tecnicos = DB.tecnicos.filter(t => t.id !== id);
-        saveDB();
-        this.renderizarPersonal(); this.renderizarDashboard();
-        showAlert('Personal eliminado', 'success');
+    editarPersonal(id) {
+        const item = DB.usuarios.find(u => u.id === id);
+        if (!item) return;
+        
+        document.getElementById('edit-personal-id').value = item.id;
+        document.getElementById('edit-personal-nombres').value = item.nombres || '';
+        document.getElementById('edit-personal-apellidos').value = item.apellidos || '';
+        document.getElementById('edit-personal-correo').value = item.correo || '';
+        document.getElementById('edit-personal-telefono').value = item.telefono || '';
+        document.getElementById('edit-personal-rol').value = item.rol || 'veterinario';
+        document.getElementById('edit-personal-especialidad').value = item.especialidad || '';
+        document.getElementById('edit-personal-password').value = '';
+        
+        this.toggleEspecialidad('edit-personal-rol', 'edit-personal-especialidad-group');
+        this.abrirModal('modal-personal-edit');
+    },
+
+    async guardarEdicionPersonal(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-actualizar-personal');
+        if (btn) btn.disabled = true;
+
+        const rol = document.getElementById('edit-personal-rol').value;
+        const personal = {
+            id: document.getElementById('edit-personal-id').value,
+            nombres: document.getElementById('edit-personal-nombres').value.trim(),
+            apellidos: document.getElementById('edit-personal-apellidos').value.trim(),
+            correo: document.getElementById('edit-personal-correo').value.trim(),
+            telefono: document.getElementById('edit-personal-telefono').value.trim(),
+            rol: rol,
+            especialidad: (rol === 'veterinario' || rol === 'tecnico') ? document.getElementById('edit-personal-especialidad').value.trim() : null
+        };
+
+        const password = document.getElementById('edit-personal-password').value;
+        if (password) personal.password = password;
+
+        try {
+            const res = await guardarPersonalSupabase(personal);
+            if (!res.success) {
+                showAlert(res.error || 'Error al actualizar personal', 'error');
+                return;
+            }
+            
+            // Reload from Supabase
+            await initDB();
+            this.renderizarPersonal();
+            this.renderizarClinica();
+            
+            this.cerrarModal('modal-personal-edit');
+            showAlert('Personal actualizado correctamente', 'success');
+        } catch (e) {
+            showAlert('Ocurrió un error', 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    },
+
+    async eliminarPersonal(id, tipo) {
+        if (!confirm(`¿Eliminar este ${tipo}? Esta acción no se puede deshacer.`)) return;
+        
+        try {
+            const res = await eliminarPersonalSupabase(id);
+            if (!res.success) {
+                showAlert(res.error || 'Error al eliminar', 'error');
+                return;
+            }
+            
+            await initDB();
+            this.renderizarPersonal(); 
+            this.renderizarClinica();
+            this.renderizarDashboard();
+            showAlert('Personal eliminado', 'success');
+        } catch(e) {
+            showAlert('Ocurrió un error', 'error');
+        }
     },
 
     // ==========================================================================
