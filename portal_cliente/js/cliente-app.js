@@ -1284,7 +1284,7 @@ function irACitas() {
     }
 }
 
-function renderDisponibilidadAgenda() {
+async function renderDisponibilidadAgenda() {
     const inputFecha = document.getElementById('fechaCita');
     const container = document.getElementById('agendaSlots');
     const summary = document.getElementById('agendaSummary');
@@ -1308,7 +1308,16 @@ function renderDisponibilidadAgenda() {
         return;
     }
 
-    const horarios = getHorariosDisponibles(fecha);
+    // Await the asynchronous database check to get the actual array instead of a Promise
+    let horarios = [];
+    try {
+        horarios = await getHorariosDisponibles(fecha);
+    } catch (e) {
+        console.error('Error fetching schedules:', e);
+        container.innerHTML = '<p style="color: #EF4444;">Error al cargar horarios. Intenta de nuevo.</p>';
+        return;
+    }
+
     const allHoras = [];
     for (let h = 9; h < 17; h++) {
         for (let m = 0; m < 60; m += 30) {
@@ -1342,11 +1351,11 @@ function renderDisponibilidadAgenda() {
     }
 }
 
-function seleccionarHorario(hora) {
+async function seleccionarHorario(hora) {
     const input = document.getElementById('horaCita');
     if (!input) return;
     input.value = hora;
-    renderDisponibilidadAgenda();
+    await renderDisponibilidadAgenda();
     showAlert(`Horario seleccionado: ${hora}`, 'success');
 }
 
@@ -1356,10 +1365,10 @@ async function reservarCitaDesdeFormulario() {
     const servicioId = document.getElementById('servicioCita')?.value || '';
     const mascotaId = document.getElementById('mascotaCita')?.value || '';
     
-    reservarCita(fecha, hora, servicioId, mascotaId);
+    await reservarCita(fecha, hora, servicioId, mascotaId);
 }
 
-function reservarCita(fecha, hora, servicioId, mascotaId) {
+async function reservarCita(fecha, hora, servicioId, mascotaId) {
     if (!cliente) {
         showAlert('Debes iniciar sesión para reservar una cita', 'error');
         return;
@@ -1422,7 +1431,7 @@ function reservarCita(fecha, hora, servicioId, mascotaId) {
     };
     
     if (citaEditandoId) {
-        updateCita(citaId, cita);
+        await updateCita(citaId, cita);
         addNotificacion({
             id: generateId('NOTI'),
             clienteId: cliente.id,
@@ -1433,7 +1442,7 @@ function reservarCita(fecha, hora, servicioId, mascotaId) {
         showAlert('Cita reprogramada correctamente 🔄', 'success');
         citaEditandoId = null;
     } else {
-        addCita(cita);
+        await addCita(cita);
         addNotificacion({
             id: generateId('NOTI'),
             clienteId: cliente.id,
@@ -1446,11 +1455,11 @@ function reservarCita(fecha, hora, servicioId, mascotaId) {
     
     document.getElementById('horaCita').value = '';
     renderCitas();
-    renderDisponibilidadAgenda();
+    await renderDisponibilidadAgenda();
     actualizarEstadisticas();
 }
 
-function reprogramarCita(id) {
+async function reprogramarCita(id) {
     const cita = DB.citas.find(c => c.id === id);
     if (!cita) {
         showAlert('Cita no encontrada', 'error');
@@ -1465,7 +1474,7 @@ function reprogramarCita(id) {
     
     showAlert(`Reprogramando cita para ${cita.servicio} - Selecciona nueva fecha y hora`, 'info');
     document.getElementById('fechaCita')?.focus();
-    renderDisponibilidadAgenda();
+    await renderDisponibilidadAgenda();
 }
 
 async function cancelarCita(id) {
@@ -1474,7 +1483,7 @@ async function cancelarCita(id) {
     const cita = DB.citas.find(c => c.id === id);
     if (!cita) return;
     
-    updateCita(id, { estado: 'Cancelada' });
+    await updateCita(id, { estado: 'Cancelada' });
     addNotificacion({
         id: generateId('NOTI'),
         clienteId: cita.clienteId,
@@ -1484,7 +1493,7 @@ async function cancelarCita(id) {
     });
     
     renderCitas();
-    renderDisponibilidadAgenda();
+    await renderDisponibilidadAgenda();
     actualizarEstadisticas();
     showAlert('Cita cancelada correctamente', 'success');
 }
