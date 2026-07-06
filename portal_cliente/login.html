@@ -351,90 +351,92 @@ async function handleLogin(event) {
         return;
     }
     
-    const btn = document.getElementById('loginBtn');
-    btn.classList.add('loading');
-    btn.disabled = true;
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.classList.add('loading');
+        loginBtn.disabled = true;
+    }
     
-    setTimeout(async () => {
-        try {
-            const resultado = await loginUsuario(email, password);
-            
-            if (!resultado.success) {
-                showAlert(resultado.message || 'Credenciales incorrectas', 'error');
-                btn.classList.remove('loading');
-                btn.disabled = false;
-                return;
-            }
-            
-            const usuario = resultado.usuario;
-            
-            // Si es cliente, redirigir al dashboard cliente
-            if (usuario.rol === 'cliente') {
-                const sesionSegura = {
-                    token: resultado.token,
-                    usuarioId: usuario.id,
-                    usuario: {
-                        id: usuario.id,
-                        nombres: usuario.nombres,
-                        apellidos: usuario.apellidos,
-                        correo: usuario.correo,
-                        telefono: usuario.telefono,
-                        rol: usuario.rol,
-                        foto: usuario.foto || null
-                    },
-                    fechaInicio: getCurrentDateTime(),
-                    fechaExpiracion: rememberMe ? 
-                        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() :
-                        new Date(Date.now() + 30 * 60 * 1000).toISOString()
-                };
-                
-                saveToStorage('maskovet_session', sesionSegura);
-                localStorage.setItem('clienteLogueado', JSON.stringify(sesionSegura.usuario));
-                
-                showAlert(`¡Bienvenido ${usuario.nombres}! 🐾`, 'success', 2000);
-                
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 500);
-            } 
-            // Si es admin/empresa, redirigir al portal empresa
-            else if (usuario.rol === 'admin' || usuario.rol === 'empresa') {
-                const session = {
-                    isLoggedIn: true,
-                    usuarioId: usuario.id,
-                    usuario: {
-                        id: usuario.id,
-                        nombres: usuario.nombres || 'Administrador',
-                        apellidos: usuario.apellidos || '',
-                        correo: usuario.correo,
-                        rol: usuario.rol
-                    },
-                    fechaInicio: getCurrentDateTime(),
-                    fechaExpiracion: rememberMe ? 
-                        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() :
-                        new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString()
-                };
-                
-                saveToStorage('maskovet_admin_session', session);
-                
-                showAlert(`¡Bienvenido ${usuario.nombres || 'Administrador'}! 🐾`, 'success', 2000);
-                
-                setTimeout(() => {
-                    window.location.href = '../portal_empresa/dashboard.html';
-                }, 500);
-            } else {
-                showAlert('Rol de usuario no válido', 'error');
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-            
-        } catch (error) {
-            console.error('Error en login:', error);
-            showAlert('Error al iniciar sesión. Intenta nuevamente.', 'error');
-            btn.classList.remove('loading');
-            btn.disabled = false;
+    try {
+        // Un pequeño retardo visual opcional para que se aprecie la animación de carga
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const resultado = await loginUsuario(email, password);
+        
+        if (!resultado.success) {
+            showAlert(resultado.message || 'Credenciales incorrectas', 'error');
+            return;
         }
-    }, 800);
+        
+        const usuario = resultado.usuario;
+        
+        // Si es cliente, redirigir al dashboard cliente
+        if (usuario.rol === 'cliente') {
+            const sesionSegura = {
+                token: resultado.token,
+                usuarioId: usuario.id,
+                usuario: {
+                    id: usuario.id,
+                    nombres: usuario.nombres,
+                    apellidos: usuario.apellidos,
+                    correo: usuario.correo,
+                    telefono: usuario.telefono,
+                    rol: usuario.rol,
+                    foto: usuario.foto || null
+                },
+                fechaInicio: getCurrentDateTime(),
+                fechaExpiracion: rememberMe ? 
+                    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() :
+                    new Date(Date.now() + 30 * 60 * 1000).toISOString()
+            };
+            
+            saveToStorage('maskovet_session', sesionSegura);
+            localStorage.setItem('clienteLogueado', JSON.stringify(sesionSegura.usuario));
+            
+            showAlert(`¡Bienvenido ${usuario.nombres}! 🐾`, 'success', 2000);
+            
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 500);
+        } 
+        // Si es admin/empresa, redirigir al portal empresa
+        else if (usuario.rol === 'admin' || usuario.rol === 'empresa') {
+            const session = {
+                isLoggedIn: true,
+                usuarioId: usuario.id,
+                usuario: {
+                    id: usuario.id,
+                    nombres: usuario.nombres || 'Administrador',
+                    apellidos: usuario.apellidos || '',
+                    correo: usuario.correo,
+                    rol: usuario.rol
+                },
+                fechaInicio: getCurrentDateTime(),
+                fechaExpiracion: rememberMe ? 
+                    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() :
+                    new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString()
+            };
+            
+            saveToStorage('maskovet_admin_session', session);
+            
+            showAlert(`¡Bienvenido ${usuario.nombres || 'Administrador'}! 🐾`, 'success', 2000);
+            
+            setTimeout(() => {
+                window.location.href = '../portal_empresa/dashboard.html';
+            }, 500);
+        } else {
+            showAlert('Rol de usuario no válido', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error en login:', error);
+        showAlert('Error al iniciar sesión. Intenta nuevamente.', 'error');
+    } finally {
+        if (loginBtn) {
+            loginBtn.classList.remove('loading');
+            loginBtn.disabled = false;
+        }
+    }
 }
 
 // ==========================================================================
@@ -451,13 +453,14 @@ async function handleRegister(event) {
     const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
     const acceptTerms = document.getElementById('acceptTerms').checked;
     
+    // 1. Validaciones
     if (!nombres || !apellidos || !email || !telefono || !password) {
         showAlert('Completa todos los campos obligatorios', 'error');
         return;
     }
     
     if (nombres.length < 2 || apellidos.length < 2) {
-        showAlert('Nombres y apellidos deben tener al menos 2 caracteres', 'error');
+        showAlert('El nombre y los apellidos deben tener al menos 2 caracteres', 'error');
         return;
     }
     
@@ -481,58 +484,92 @@ async function handleRegister(event) {
         return;
     }
     
-    setTimeout(async () => {
-        try {
-            const usuario = { 
-                nombres: nombres.charAt(0).toUpperCase() + nombres.slice(1).toLowerCase(),
-                apellidos: apellidos.charAt(0).toUpperCase() + apellidos.slice(1).toLowerCase(),
-                correo: email.toLowerCase().trim(),
-                telefono: telefono.trim(),
-                password: password,
-                rol: 'cliente'
-            };
-            
-            const resultado = await addUsuario(usuario);
-            
-            // Verificar si hubo error
-            if (resultado && resultado.error) {
-                showAlert(resultado.error, 'error');
-                btn.classList.remove('loading');
-                btn.disabled = false;
-                return;
-            }
-            
-            if (!resultado || !resultado.id) {
-                showAlert('Error inesperado al registrar. Intenta nuevamente.', 'error');
-                btn.classList.remove('loading');
-                btn.disabled = false;
-                return;
-            }
-            
-            showAlert('🎉 Registro exitoso. Ahora puedes iniciar sesión.', 'success', 3000);
-            
-            document.getElementById('registerNombres').value = '';
-            document.getElementById('registerApellidos').value = '';
-            document.getElementById('registerEmail').value = '';
-            document.getElementById('registerTelefono').value = '';
-            document.getElementById('registerPassword').value = '';
-            document.getElementById('registerConfirmPassword').value = '';
-            document.getElementById('acceptTerms').checked = false;
-            
-            switchTab('login');
-            document.getElementById('loginEmail').value = email;
-            
-            btn.classList.remove('loading');
-            btn.disabled = false;
-            
-        } catch (error) {
-            console.error('Error en registro:', error);
-            showAlert('Error al registrar. Intenta nuevamente.', 'error');
-            btn.classList.remove('loading');
-            btn.disabled = false;
+    if (!acceptTerms) {
+        showAlert('Debes aceptar los términos y condiciones para continuar', 'warning');
+        return;
+    }
+    
+    const registerBtn = document.getElementById('registerBtn');
+    if (registerBtn) {
+        registerBtn.classList.add('loading');
+        registerBtn.disabled = true;
+    }
+    
+    try {
+        const usuario = { 
+            nombres: nombres.charAt(0).toUpperCase() + nombres.slice(1).toLowerCase(),
+            apellidos: apellidos.charAt(0).toUpperCase() + apellidos.slice(1).toLowerCase(),
+            correo: email.toLowerCase().trim(),
+            telefono: telefono.trim(),
+            password: password,
+            rol: 'cliente'
+        };
+        
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const resultado = await addUsuario(usuario);
+        
+        // Verificar si hubo error
+        if (resultado && resultado.error) {
+            showAlert(resultado.error, 'error');
+            return;
         }
-    }, 800);
+        
+        if (!resultado || !resultado.id) {
+            showAlert('Error inesperado al registrar. Intenta nuevamente.', 'error');
+            return;
+        }
+        
+        showAlert('🎉 ¡Registro exitoso! Ahora puedes iniciar sesión.', 'success', 3000);
+        
+        // Limpiar campos del formulario
+        resetRegisterForm();
+        
+        // Cambiar a la pestaña de login y colocar el correo recién registrado
+        switchTab('login');
+        const loginEmail = document.getElementById('loginEmail');
+        if (loginEmail) {
+            loginEmail.value = email;
+        }
+        
+    } catch (error) {
+        console.error('Error en registro:', error);
+        showAlert('Error al registrar. Intenta nuevamente.', 'error');
+    } finally {
+        if (registerBtn) {
+            registerBtn.classList.remove('loading');
+            registerBtn.disabled = false;
+        }
+    }
 }
+
+function resetRegisterForm() {
+    const fields = [
+        'registerNombres', 
+        'registerApellidos', 
+        'registerEmail', 
+        'registerTelefono', 
+        'registerPassword', 
+        'registerConfirmPassword'
+    ];
+    fields.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) {
+            field.value = '';
+            field.classList.remove('error', 'success');
+        }
+    });
+    
+    const acceptTerms = document.getElementById('acceptTerms');
+    if (acceptTerms) {
+        acceptTerms.checked = false;
+    }
+    
+    document.querySelectorAll('#registerForm .validation-icon').forEach(icon => {
+        icon.textContent = '';
+    });
+}
+
 
 // ==========================================================================
 // 6. RECUPERAR CONTRASEÑA
