@@ -1377,12 +1377,11 @@ const EmpresaApp = {
             },
             inventario: {
                 titulo: 'Reporte de Inventario',
-                resumen: `${DB.inventario ? DB.inventario.length : 0} productos con control de stock`,
-                headers: ['Producto', 'Stock', 'Stock mínimo', 'Ubicación'],
-                rows: DB.inventario ? DB.inventario.map(i => {
-                    const p = DB.productos.find(prod => prod.id === i.productoId);
-                    return [p?.nombre || i.productoId, i.stock || 0, i.stockMinimo || 5, i.ubicacion || 'Bodega principal'];
-                }) : []
+                resumen: `${DB.productos.length} ítems registrados en inventario`,
+                headers: ['Producto', 'Stock', 'Stock mínimo', 'Categoría'],
+                rows: DB.productos.map(p => {
+                    return [p.nombre, p.stock || 0, 5, p.categoria || 'General'];
+                })
             },
             clinica: {
                 titulo: 'Reporte Clínico',
@@ -1402,19 +1401,40 @@ const EmpresaApp = {
         if (!this.reportData) { showAlert('Genera primero la vista previa del reporte', 'warning'); return; }
         const data = this.reportData;
         const filename = `${data.titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        
+        const toCsv = (rows, headers) => {
+            const csvRows = [];
+            csvRows.push(headers.join(','));
+            for (const row of rows) {
+                const values = row.map(val => {
+                    const escaped = ('' + val).replace(/"/g, '""');
+                    return `"${escaped}"`;
+                });
+                csvRows.push(values.join(','));
+            }
+            return csvRows.join('\n');
+        };
+
+        const downloadTextFile = (filename, content, type) => {
+            const blob = new Blob(['\uFEFF' + content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
         try {
             if (tipo === 'excel' || tipo === 'csv') {
                 const csv = toCsv(data.rows, data.headers);
                 downloadTextFile(`${filename}.csv`, csv, 'text/csv;charset=utf-8');
-            } else if (tipo === 'xml') {
-                const xml = buildXmlFromReport({ titulo: data.titulo, headers: data.headers, rows: data.rows });
-                downloadTextFile(`${filename}.xml`, xml, 'application/xml;charset=utf-8');
             } else if (tipo === 'json') {
-                const json = toJson({ titulo: data.titulo, headers: data.headers, rows: data.rows });
+                const json = JSON.stringify({ titulo: data.titulo, headers: data.headers, rows: data.rows }, null, 2);
                 downloadTextFile(`${filename}.json`, json, 'application/json;charset=utf-8');
             } else {
-                const pdf = createPdfContent({ titulo: data.titulo, headers: data.headers, rows: data.rows });
-                downloadTextFile(`${filename}.pdf`, pdf, 'application/pdf;charset=utf-8');
+                showAlert(`La exportación a ${tipo.toUpperCase()} aún no está implementada`, 'warning');
+                return;
             }
             showAlert(`Reporte "${data.titulo}" exportado en ${tipo.toUpperCase()} ✅`, 'success');
         } catch (error) {
