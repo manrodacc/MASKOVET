@@ -113,24 +113,39 @@ function actualizarInfoUsuario() {
 }
 
 function actualizarEstadisticas() {
+    const numMascotas = DB.mascotas.filter(m => m.clienteId === cliente.id).length;
+    const numCitas = DB.citas.filter(c => c.clienteId === cliente.id).length;
+    const numPedidos = DB.ventas ? DB.ventas.filter(v => v.clienteId === cliente.id).length : 0;
+    const noLeidas = DB.notificaciones.filter(n => n.clienteId === cliente.id && !n.leida).length;
+
     const totalMascotas = document.getElementById('totalMascotas');
     const totalCitas = document.getElementById('totalCitas');
     const totalPedidos = document.getElementById('totalPedidos');
     const totalNotificaciones = document.getElementById('totalNotificaciones');
 
-    if (totalMascotas) {
-        totalMascotas.textContent = DB.mascotas.filter(m => m.clienteId === cliente.id).length;
-    }
-    if (totalCitas) {
-        totalCitas.textContent = DB.citas.filter(c => c.clienteId === cliente.id).length;
-    }
-    if (totalPedidos) {
-        totalPedidos.textContent = DB.ventas ? DB.ventas.filter(v => v.clienteId === cliente.id).length : 0;
-    }
+    if (totalMascotas) totalMascotas.textContent = numMascotas;
+    if (totalCitas) totalCitas.textContent = numCitas;
+    if (totalPedidos) totalPedidos.textContent = numPedidos;
     if (totalNotificaciones) {
-        const noLeidas = DB.notificaciones.filter(n => n.clienteId === cliente.id && !n.leida).length;
         totalNotificaciones.textContent = noLeidas;
         totalNotificaciones.style.display = noLeidas > 0 ? 'inline' : 'none';
+    }
+
+    const mascotasBadge = document.getElementById('mascotasBadge');
+    const citasBadge = document.getElementById('citasBadge');
+    const notificacionesBadge = document.getElementById('notificacionesBadge');
+
+    if (mascotasBadge) {
+        mascotasBadge.textContent = numMascotas;
+        mascotasBadge.style.display = numMascotas > 0 ? 'inline-block' : 'none';
+    }
+    if (citasBadge) {
+        citasBadge.textContent = numCitas;
+        citasBadge.style.display = numCitas > 0 ? 'inline-block' : 'none';
+    }
+    if (notificacionesBadge) {
+        notificacionesBadge.textContent = noLeidas > 0 ? noLeidas : '';
+        notificacionesBadge.style.display = noLeidas > 0 ? 'inline-block' : 'none';
     }
 }
 
