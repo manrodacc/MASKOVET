@@ -19,7 +19,6 @@ try {
 // 1. ESTRUCTURA DE BASE DE DATOS
 // ==========================================================================
 
-window.DB = {};
 const DB = {
 
 
@@ -67,6 +66,8 @@ const DB = {
     factTratamientos: [],
     factEncuestas: []
 };
+window.DB = DB;
+
 
 // ==========================================================================
 // 2. CONFIGURACIÓN DE EMPRESA
@@ -284,10 +285,26 @@ function crearUsuariosIniciales() {
 
 async function addUsuario(usuario) {
     try {
-        if (!usuario.correo || !usuario.password || !usuario.rol) return null;
-        if (!validateEmail(usuario.correo)) return null;
+        if (!usuario.correo || !usuario.password || !usuario.rol) {
+            console.error('❌ Datos incompletos para registro');
+            return { error: 'Datos incompletos: correo, password y rol son obligatorios' };
+        }
+        if (!validateEmail(usuario.correo)) {
+            return { error: 'El correo electrónico no es válido' };
+        }
 
         const emailNormalizado = usuario.correo.toLowerCase().trim();
+
+        // Verificar duplicado directamente en Supabase
+        const { data: existente } = await supabase
+            .from('usuarios')
+            .select('id')
+            .eq('correo', emailNormalizado)
+            .limit(1);
+
+        if (existente && existente.length > 0) {
+            return { error: 'Este correo ya está registrado' };
+        }
 
         const nuevo = {
             nombres: (usuario.nombres || '').trim(),
@@ -305,15 +322,25 @@ async function addUsuario(usuario) {
             .select();
 
         if (error) {
-            console.error('❌ Error adding user to Supabase:', error); alert('Error Supabase: ' + JSON.stringify(error));
-            return null;
+            console.error('❌ Error Supabase insert:', error);
+            if (error.code === '23505') {
+                return { error: 'Este correo ya está registrado' };
+            }
+            return { error: 'Error al registrar: ' + (error.message || 'Error desconocido') };
         }
+
+        if (!data || data.length === 0) {
+            return { error: 'No se pudo crear el usuario' };
+        }
+
+        // Actualizar caché local
+        DB.usuarios.push(data[0]);
 
         console.log('✅ Usuario registrado:', emailNormalizado);
         return data[0];
     } catch (error) {
-        console.error('❌ Error adding user:', error); alert('Error Catch DB: ' + error.message);
-        return null;
+        console.error('❌ Error en addUsuario:', error);
+        return { error: 'Error de conexión: ' + (error.message || 'Intenta nuevamente') };
     }
 }
 
@@ -1034,11 +1061,24 @@ function addTecnico(tecnico) {
 // 15. AUTENTICACIÓN
 // ==========================================================================
 
-function loginUsuario(correo, password) {
+async function loginUsuario(correo, password) {
     console.log('🔍 Intentando login:', correo);
     
     const emailNormalizado = correo.toLowerCase().trim();
-    const usuario = DB.usuarios.find(u => u.correo === emailNormalizado);
+
+    // Buscar usuario directamente en Supabase para datos frescos
+    const { data: usuarios, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('correo', emailNormalizado)
+        .limit(1);
+
+    if (error) {
+        console.error('❌ Error consultando Supabase:', error);
+        return { success: false, message: 'Error de conexión. Intenta nuevamente.' };
+    }
+
+    const usuario = usuarios && usuarios[0];
     
     if (!usuario) {
         console.log('❌ Usuario no encontrado');
@@ -1048,28 +1088,19 @@ function loginUsuario(correo, password) {
     console.log('👤 Usuario encontrado:', usuario.correo);
     
     const passwordEncrypted = encryptPassword(password);
-    console.log('🔐 Password ingresada (encriptada):', passwordEncrypted);
-    console.log('🔐 Password guardada:', usuario.password);
-    
     const correct = usuario.password === passwordEncrypted;
-    console.log('🔑 ¿Coinciden?', correct);
     
     if (!correct) {
         return { success: false, message: 'Contraseña incorrecta' };
     }
     
-    usuario.ultimoAcceso = getCurrentDateTime();
+    // Actualizar último acceso en Supabase
+    await supabase
+        .from('usuarios')
+        .update({ ultimo_acceso: new Date().toISOString() })
+        .eq('id', usuario.id);
     
     const token = generateId('TOKEN');
-    DB.sesiones.push({
-        id: generateId('SES'),
-        usuarioId: usuario.id,
-        token: token,
-        fechaInicio: getCurrentDateTime(),
-        fechaExpiracion: new Date(Date.now() + 30 * 60 * 1000).toISOString()
-    });
-    
-    saveDB();
     console.log('✅ Login exitoso para:', correo);
     
     return {

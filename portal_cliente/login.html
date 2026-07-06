@@ -2,16 +2,6 @@
 <html lang="es">
 <head>
 
-<script>
-window.onerror = function(msg, url, line, col, error) {
-    alert("💥 ERROR JS: " + msg + "\nLinea: " + line);
-    return false;
-};
-window.onunhandledrejection = function(event) {
-    alert("💥 PROMESA FALLIDA: " + (event.reason ? event.reason.message || event.reason : "Error desconocido"));
-};
-</script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Cliente - MaskoVet</title>
@@ -491,39 +481,29 @@ async function handleRegister(event) {
         return;
     }
     
-    if (!acceptTerms) {
-        showAlert('Debes aceptar los términos y condiciones', 'error');
-        return;
-    }
-    
-    const existe = DB.usuarios.some(u => u.correo.toLowerCase() === email.toLowerCase());
-    if (existe) {
-        showAlert('Este correo ya está registrado', 'error');
-        return;
-    }
-    
-    const btn = document.getElementById('registerBtn');
-    btn.classList.add('loading');
-    btn.disabled = true;
-    
     setTimeout(async () => {
         try {
             const usuario = { 
-                id: generateId('USR'), 
                 nombres: nombres.charAt(0).toUpperCase() + nombres.slice(1).toLowerCase(),
                 apellidos: apellidos.charAt(0).toUpperCase() + apellidos.slice(1).toLowerCase(),
                 correo: email.toLowerCase().trim(),
                 telefono: telefono.trim(),
                 password: password,
-                rol: 'cliente',
-                fechaCreacion: getCurrentDateTime(),
-                estado: 'Activo'
+                rol: 'cliente'
             };
             
-            const resultado = await addUsuario(usuario); alert('Resultado de addUsuario: ' + JSON.stringify(resultado));
+            const resultado = await addUsuario(usuario);
             
-            if (!resultado) {
-                showAlert('Error al registrar el usuario', 'error');
+            // Verificar si hubo error
+            if (resultado && resultado.error) {
+                showAlert(resultado.error, 'error');
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                return;
+            }
+            
+            if (!resultado || !resultado.id) {
+                showAlert('Error inesperado al registrar. Intenta nuevamente.', 'error');
                 btn.classList.remove('loading');
                 btn.disabled = false;
                 return;
@@ -546,7 +526,7 @@ async function handleRegister(event) {
             btn.disabled = false;
             
         } catch (error) {
-            console.error('Error en registro:', error); alert('Error en registro: ' + error.message);
+            console.error('Error en registro:', error);
             showAlert('Error al registrar. Intenta nuevamente.', 'error');
             btn.classList.remove('loading');
             btn.disabled = false;
