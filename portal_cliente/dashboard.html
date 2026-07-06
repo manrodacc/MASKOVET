@@ -118,6 +118,65 @@
         .menu-badge#notificacionesBadge:not(:empty) {
             display: inline;
         }
+        
+        /* ===== WIZARD DE AGENDAR CITAS PREMIUM ===== */
+        .appointment-wizard-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 28px;
+            margin-top: 16px;
+        }
+        @media (max-width: 900px) {
+            .appointment-wizard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .wizard-step-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+        .wizard-step-card:hover {
+            border-color: #1E5EFF;
+            box-shadow: 0 4px 12px rgba(30, 94, 255, 0.05);
+        }
+        .wizard-step-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .wizard-step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #1E5EFF;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .wizard-step-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1E293B;
+        }
+        .wizard-slots-container {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 24px;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
     </style>
 </head>
 <body>
@@ -279,33 +338,75 @@
                 <div class="section-header">
                     <h2 class="section-title">📅 Agendar Nueva Cita</h2>
                 </div>
-                <div class="agenda-summary" id="agendaSummary">
-                    <span>Selecciona una fecha para ver los horarios disponibles</span>
-                </div>
                 <form id="formCita" onsubmit="reservarCitaDesdeFormulario(); return false;">
-                    <div class="form-grid two">
-                        <div class="form-group">
-                            <label class="required">Fecha</label>
-                            <input type="date" id="fechaCita" onchange="renderDisponibilidadAgenda()" required>
+                    <div class="appointment-wizard-layout">
+                        
+                        <!-- Columna izquierda: Selección de Mascota, Servicio y Fecha -->
+                        <div class="wizard-left-col">
+                            
+                            <!-- Paso 1: Mascota -->
+                            <div class="wizard-step-card">
+                                <div class="wizard-step-header">
+                                    <span class="wizard-step-number">1</span>
+                                    <span class="wizard-step-title">¿Quién va a consulta? (Mascota)</span>
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <select id="mascotaCita" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #E2E8F0; background: #FFFFFF; font-weight: 600; outline: none; color: #1E293B;" required></select>
+                                </div>
+                            </div>
+                            
+                            <!-- Paso 2: Servicio -->
+                            <div class="wizard-step-card">
+                                <div class="wizard-step-header">
+                                    <span class="wizard-step-number">2</span>
+                                    <span class="wizard-step-title">¿Qué servicio necesitas?</span>
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <select id="servicioCita" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #E2E8F0; background: #FFFFFF; font-weight: 600; outline: none; color: #1E293B;" required></select>
+                                </div>
+                            </div>
+                            
+                            <!-- Paso 3: Fecha -->
+                            <div class="wizard-step-card">
+                                <div class="wizard-step-header">
+                                    <span class="wizard-step-number">3</span>
+                                    <span class="wizard-step-title">Elige la fecha de atención</span>
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <input type="date" id="fechaCita" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #E2E8F0; background: #FFFFFF; font-weight: 600; outline: none; color: #1E293B;" onchange="renderDisponibilidadAgenda()" required>
+                                </div>
+                            </div>
+                            
                         </div>
-                        <div class="form-group">
-                            <label class="required">Mascota</label>
-                            <select id="mascotaCita" required></select>
+                        
+                        <!-- Columna derecha: Visualización de Horarios y Confirmación -->
+                        <div class="wizard-right-col">
+                            <div class="wizard-slots-container">
+                                <div class="wizard-step-header">
+                                    <span class="wizard-step-number">4</span>
+                                    <span class="wizard-step-title">Elige un horario disponible</span>
+                                </div>
+                                
+                                <div class="agenda-summary" id="agendaSummary" style="margin-bottom: 16px; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 12px;">
+                                    <span>Selecciona una fecha en el Paso 3 para ver las horas libres</span>
+                                </div>
+                                
+                                <div class="form-group" style="margin-bottom: 16px;">
+                                    <label style="font-size: 0.85rem; font-weight: 600; color: #64748B; display: block; margin-bottom: 6px;">Hora seleccionada</label>
+                                    <input type="text" id="horaCita" placeholder="Haz clic en un horario de abajo" readonly style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #E2E8F0; background: #F8FAFC; cursor: pointer; font-weight: 700; color: #1E5EFF; text-align: center; font-size: 1.1rem;" required>
+                                </div>
+                                
+                                <div class="agenda-grid" id="agendaSlots" style="flex: 1; min-height: 180px; align-content: start; max-height: 250px; overflow-y: auto; padding-right: 4px;"></div>
+                                
+                                <input type="hidden" id="citaEditandoId" value="">
+                                
+                                <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+                                    <button type="submit" class="btn btn-primary" id="btnReservarCita" style="width: 100%; padding: 14px 20px; border-radius: 12px; font-size: 1rem;">📅 Confirmar y Reservar Cita</button>
+                                    <button type="button" class="btn btn-outline" onclick="cancelarEdicionCita()" id="btnCancelarEdicion" style="display: none; width: 100%; padding: 14px 20px; border-radius: 12px; font-size: 1rem;">Cancelar Edición</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="required">Servicio</label>
-                            <select id="servicioCita" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label>Hora seleccionada</label>
-                            <input type="text" id="horaCita" placeholder="Selecciona un horario" readonly style="background: #F8FAFC; cursor: pointer;">
-                        </div>
-                    </div>
-                    <input type="hidden" id="citaEditandoId" value="">
-                    <div class="agenda-grid" id="agendaSlots"></div>
-                    <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button type="submit" class="btn btn-primary" id="btnReservarCita">📅 Reservar Cita</button>
-                        <button type="button" class="btn btn-outline" onclick="cancelarEdicionCita()" id="btnCancelarEdicion" style="display: none;">Cancelar Edición</button>
+                        
                     </div>
                 </form>
             </div>
